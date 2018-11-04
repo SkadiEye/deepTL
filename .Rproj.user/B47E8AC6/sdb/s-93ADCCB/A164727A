@@ -1,0 +1,20 @@
+{
+    "collab_server" : "",
+    "contents" : "###########################################################\n### Predict using dnnet objects\n\n#' @describeIn Predict new observations using \\code{dnnet} object.\n#'\n#' @param object A \\code{dnnet} object.\n#' @param newData A matrix with the same number of columns in the input data.\n#' @param type Consistent with model.type in the \\code{object}.\n#'\n#' @return A numeric vector for regression or a matrix of probabilities for each class for classification.\n#'\n#' @seealso\n#' \\code{\\link{dnnet-class}}\\cr\n#'\n#' @export\nsetMethod(\"predict\",\n          \"dnnet\",\n          function(object, newData, type, ...) {\n\n            n.layer <- length(object@bias) - 1\n            activate <- get(object@model.spec$activate)\n            one_sample_size <- rep(1, dim(newData)[1])\n            newData <- (newData - outer(rep(1, dim(newData)[1]), object@norm$x.center)) /\n              outer(rep(1, dim(newData)[1]), object@norm$x.scale)\n            for(j in 1:n.layer) {\n\n              if(j == 1) {\n                pred <- activate(newData %*% object@weight[[j]] + one_sample_size %*% object@bias[[j]])\n              } else {\n                pred <- activate(pred %*% object@weight[[j]] + one_sample_size %*% object@bias[[j]])\n              }\n            }\n            pred <- (pred %*% object@weight[[n.layer + 1]] + one_sample_size %*% object@bias[[n.layer + 1]])[, 1]\n            if(object@model.type == \"classification\") {\n              pred <- 1/(exp(-pred) + 1)\n              return(matrix(cbind(pred, 1-pred), dim(newData)[1], length(object@label),\n                            dimnames = list(NULL, object@label)))\n            }\n\n            return(pred*object@norm$y.scale + object@norm$y.center)\n          })\n\nsetMethod(\"predict\",\n          \"dnnetEnsemble\",\n          function(object, newData, type, ...) {\n\n            pred.all <- c()\n            for(i in 1:length(object@keep)) {\n\n              if(object@keep[i]) {\n\n                pred <- predict(object@model.list[[i]], newData)\n                if(object@model.type == \"Binary\")\n                  pred <- pred[, object@model.list[[1]]@label[1]]\n                pred.all <- cbind(pred.all, pred)\n              }\n            }\n\n            pred.avg <- apply(pred.all, 1, mean)\n            if(object@model.type == \"Binary\")\n              return(matrix(c(pred.avg, 1 - pred.avg), dim(newData)[1], 2,\n                            dimnames = list(NULL, object@model.list[[1]]@label)))\n            return(pred.avg)\n          })\n",
+    "created" : 1538869147372.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "18990031",
+    "id" : "A164727A",
+    "lastKnownWriteTime" : 1538870031,
+    "last_content_update" : 1538870031105,
+    "path" : "~/Dropbox (UFL)/Rpackages/deepTL/deepTL/R/3-1-predict.R",
+    "project_path" : "R/3-1-predict.R",
+    "properties" : {
+    },
+    "relative_order" : 9,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

@@ -1,0 +1,130 @@
+library(deepTL)
+library(MASS)
+
+n_sample <- 1000
+n_test <- 1000
+n_p <- 5
+n.iter <- 100
+alpha <- 5
+gamma <- 2
+
+set.seed(1000)
+beta0 <- rnorm(n_p)
+beta1 <- rnorm(n_p)
+beta2 <- rnorm(n_p)
+beta3 <- rnorm(n_p)
+
+set.seed(99999)
+
+n.rep <- 1000
+mse.f1.lm <- mse.f0.lm <- mse.yg.lm <- div.gx.lm <- acc.gx.lm <- numeric(n.rep)
+mse.f1.or <- mse.f0.or <- mse.yg.or <- div.gx.or <- acc.gx.or <- numeric(n.rep)
+for (j in 1:n.rep) {
+
+  x <- mvrnorm(n_sample, rep(0, n_p), diag(n_p))
+  prob.h <- as.numeric(1/(1+exp(x %*% beta0 * 2 + x[, 1]**2 - x[, 2]**2)))
+  h <- rbinom(n_sample, 1, prob.h)
+  prob.z <- as.numeric(1/(1+exp(x %*% beta1))) # 0.5 #
+  z <- rbinom(n_sample, 1, prob.z)
+  y <- x %*% beta2 + x[, 1]*x[, 2]*2 + z * (x %*% beta3 + x[, 1]**2 + x[, 2]**2) +
+    h * (gamma + z * alpha) + rnorm(n_sample)
+
+  x.test <- mvrnorm(n_test, rep(0, n_p), diag(n_p))
+  prob.h.test <- as.numeric(1/(1+exp(x.test %*% beta0 * 2 + x.test[, 1]**2 - x.test[, 2]**2)))
+  h.test <- rbinom(n_test, 1, prob.h.test)
+  prob.z.test <- as.numeric(1/(1+exp(x.test %*% beta1))) # 0.5 #
+  z.test <- rbinom(n_test, 1, prob.z.test)
+  y.test <- x.test %*% beta2 + x.test[, 1]*x.test[, 2]*2 +
+    z.test * (x.test %*% beta3 + x.test[, 1]**2 + x.test[, 2]**2) +
+    h.test * (gamma + z.test * alpha) + rnorm(n_test)
+
+  h.sim <- rbinom(n_sample, 1, 0.5)
+  alpha.est <- 0
+  gamma.est <- 0
+  for(i in 1:n.iter) {
+
+    h_obj <- importDnnet(x = x, y = factor(ifelse(h.sim == 1, "A", "B")))
+    g.x.mod <- ensemble_dnnet(h_obj, 25, esCtrl = list(n.hidden = c(20, 15, 10), n.epoch = 250, n.batch = 50,
+                                                       early.stop = TRUE, early.stop.det = 1000, plot = TRUE,
+                                                       norm.x = FALSE, norm.y = TRUE,
+                                                       learning.rate.adaptive = "adam"))
+    g.x <- predict(g.x.mod, x)[, "A"]
+    y_obj <- importDnnet(x = cbind(x, z), y = y - h.sim*(gamma.est + z*alpha))
+    f.x.mod <- ensemble_dnnet(y_obj, 25,
+                              esCtrl = list(n.hidden = c(20, 15, 10), n.epoch = 500, n.batch = 50,
+                                            early.stop = TRUE, early.stop.det = 1000, plot = TRUE,
+                                            norm.x = FALSE, norm.y = TRUE,
+                                            learning.rate.adaptive = "adam"))
+    f.xz <- predict(f.x.mod, cbind(x, z))
+    h_dat <- data.frame(y = y - f.xz, x1 = h.sim, x2 = h.sim*z)
+    h_mod <- lm(y ~ x1 + x2 - 1, h_dat)
+    alpha.est <- coefficients(h_mod)["x2"]
+    gamma.est <- coefficients(h_mod)["x1"]
+    alpha.var <- vcov(h_mod)["x2", "x2"]
+    gamma.var <- vcov(h_mod)["x1", "x1"]
+    sigma.sq <- mean((y - f.xz - (h.sim - g.x)*(gamma.est + z*alpha.est))**2)
+    h.sim.d <- -((y - f.xz - (gamma.est + z*alpha.est))**2 - (y - f.xz)**2)/sigma.sq/2 + log(g.x/(1-g.x))
+    h.sim <- rbinom(n_sample, 1, 1/(1+exp(-h.sim.d))) # (z.sim.d > 0)*1 #
+
+    print(c(i,
+            mean(h.sim == h),
+            mean((g.x > 0.5) == h),
+            min(-mean(prob.h*log(g.x) + (1-prob.h)*log(1-g.x)),
+                -mean((1-prob.h)*log(g.x) + prob.h*log(1-g.x))),
+            alpha.est, alpha.var, gamma.est, gamma.var))
+  }
+
+  # plot(g.x ~ prob.h)
+  # table(h.sim, h)
+  # table(g.x > 0.5, h)
+
+  g.x.test <- predict(g.x.mod, x.test)[, "A"]
+  f1x.test <- predict(f1.x.mod, cbind(x.test, z.test))@pred
+  f0x.test <- predict(f0.x.mod, cbind(x.test, z.test))@pred
+  # g.x.test <- as.numeric(1/(1+exp(-cbind(rep(1, n_test), x.test) %*%
+  #                                   coefficients(glm(h.sim ~ x, family = "binomial")))))
+  # f1x.test <- as.numeric(cbind(rep(1, n_test), x.test, z.test, x.test*z.test) %*%
+  #                          coefficients(lm(y ~ x + z + x:z, subset = (h.sim == 1))))
+  # f0x.test <- as.numeric(cbind(rep(1, n_test), x.test, z.test, x.test*z.test) %*%
+  #                          coefficients(lm(y ~ x + z + x:z, subset = (h.sim == 0))))
+  ypd.test <- ifelse(g.x.test > 0.5, f1x.test, f0x.test)
+
+  # plot(y.test, ypd.test, col = h.test + 1, bg = (g.x.test > 0.5) + 1, pch = 21)
+  # abline(0, 1)
+  # cor(y.test, ypd.test)
+  # table(g.x.test > 0.5, h.test)
+
+  mse.f1.lm[j] <- min(mean((y.test[h.test == 1] - f1x.test[h.test == 1])**2),
+                      mean((y.test[h.test == 1] - f0x.test[h.test == 1])**2))
+  mse.f0.lm[j] <- min(mean((y.test[h.test == 0] - f1x.test[h.test == 0])**2),
+                      mean((y.test[h.test == 0] - f0x.test[h.test == 0])**2))
+  mse.yg.lm[j] <- mean((y.test - ypd.test)**2)
+  div.gx.lm[j] <- min(-mean(prob.h.test*log(g.x.test) + (1 - prob.h.test)*log(1 - g.x.test)),
+                      -mean(prob.h.test*log(1 - g.x.test) + (1 - prob.h.test)*log(g.x.test)))
+  acc.gx.lm[j] <- max(mean((g.x.test > 0.5) == h.test), mean((g.x.test <= 0.5) == h.test))
+
+  oracle.lm1 <- as.numeric(cbind(rep(1, n_test), x.test, z.test, x.test*z.test) %*%
+                             coefficients(lm(y ~ x + z + x:z, subset = (h == 1))))
+  oracle.lm0 <- as.numeric(cbind(rep(1, n_test), x.test, z.test, x.test*z.test) %*%
+                             coefficients(lm(y ~ x + z + x:z, subset = (h == 0))))
+  oracle.glm <- as.numeric(1/(1+exp(-cbind(rep(1, n_test), x.test) %*%
+                                      coefficients(glm(h ~ x, family = "binomial")))))
+  oracle.ypd <- ifelse((oracle.glm > 0.5), oracle.lm1, oracle.lm0)
+
+  mse.f1.or[j] <- mean((y.test - oracle.lm1)[h.test == 1]**2)
+  mse.f0.or[j] <- mean((y.test - oracle.lm0)[h.test == 0]**2)
+  mse.yg.or[j] <- mean((y.test - oracle.ypd)**2)
+  div.gx.or[j] <- -mean(prob.h.test*log(oracle.glm) + (1 - prob.h.test)*log(1 - oracle.glm))
+  acc.gx.or[j] <- max(mean((oracle.glm > 0.5) == h.test), mean((oracle.glm <= 0.5) == h.test))
+
+  if(! j %% 100) print(j)
+}
+
+c(mean(mse.f1.lm), sd(mse.f1.lm), mean(mse.f0.lm), sd(mse.f0.lm), mean(mse.yg.lm), sd(mse.yg.lm))
+c(mean(mse.f1.or), sd(mse.f1.or), mean(mse.f0.or), sd(mse.f0.or), mean(mse.yg.or), sd(mse.yg.or))
+
+c(mean(div.gx.lm), sd(div.gx.lm), mean(acc.gx.lm), sd(acc.gx.lm))
+c(mean(div.gx.or), sd(div.gx.or), mean(acc.gx.or), sd(acc.gx.or))
+
+
+

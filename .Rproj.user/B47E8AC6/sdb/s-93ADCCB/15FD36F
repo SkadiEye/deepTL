@@ -1,0 +1,20 @@
+{
+    "collab_server" : "",
+    "contents" : "#' Append an argument on a list\n#'\n#' Append an argument on a list of arguments\n#'\n#' @param args The original argument list.\n#' @param argName The name of the argument to add.\n#' @param argValue The value of the argument to add.\n#' @param forced a \\code{logical} value indicating if the argument with the same\n#'  name already existed, whether it should be added forcedly.\n#'\n#' @return An argument list.\n#'\n#' @export\nappendArg <- function(args, argName, argValue, forced) {\n\n  if((!argName %in% names(args)) && (!forced)) {\n\n    # cat(\"Default behavior: setting\", argName, \"to\", argValue, \"...\\n\")\n    args[[argName]] <- argValue\n  } else if(forced) {\n\n    # cat(\"Forced behavior: setting\", argName, \"to\", argValue, \"(cannot override) ...\\n\")\n    args[[argName]] <- argValue\n  }\n\n  return(args)\n}\n\n#' Remove an argument on a list\n#'\n#' Remove an argument on a list of arguments\n#'\n#' @param args The original argument list.\n#' @param argName The name of the argument to be remmoved. If the name does not exist,\n#'  no argument will be removed.\n#'\n#' @return An argument list.\n#'\n#' @export\nremoveArg <- function(args, argName) {\n\n  if(argName %in% names(args))\n    args[[which(names(args) == argName)]] <- NULL\n  return(args)\n}\n",
+    "created" : 1541296674478.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2402435169",
+    "id" : "15FD36F",
+    "lastKnownWriteTime" : 1538852519,
+    "last_content_update" : 1538852519,
+    "path" : "~/Dropbox (UFL)/Rpackages/deepTL/deepTL/R/9-control.R",
+    "project_path" : "R/9-control.R",
+    "properties" : {
+    },
+    "relative_order" : 7,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

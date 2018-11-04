@@ -1,0 +1,20 @@
+{
+    "collab_server" : "",
+    "contents" : "###########################################################\n### Define generic functions: show, print, '[', '$', plot\n\n#################################\n#### dnnetInput class\n\n#' @describeIn dnnetInput Method to show \\code{dnnetInput} object.\n#'\n#' @param object A \\code{dnnetInput} object.\n#'\n#' @export\nsetMethod(\"show\",\n          \"dnnetInput\",\n          function(object) {\n\n            print(\"y: (first 6)\")\n            print(object@y[1:6])\n            print(\"x: (first 6x6)\")\n            print(paste(\"dim(x) =\", dim(x)[1], \"x\", dim(x)[2]))\n            print(object@x[1:6, 1:6])\n            print(\"w: (first 6)\")\n            print(object@w[1:6])\n          })\n\n#################################\n#### dnnet class\n\n#' @describeIn dnnet Method to show \\code{dnnet} object.\n#'\n#' @param object A \\code{dnnet} object.\n#'\n#' @export\nsetMethod(\"show\",\n          \"dnnet\",\n          function(object) {\n\n            print(\"A dnnet model object. \")\n\n          })\n",
+    "created" : 1538868112234.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3361969558",
+    "id" : "7E6C66E7",
+    "lastKnownWriteTime" : 1524681063,
+    "last_content_update" : 1524681063,
+    "path" : "~/Dropbox (UFL)/Rpackages/deepTL/deepTL/R/1-2-methods.R",
+    "project_path" : "R/1-2-methods.R",
+    "properties" : {
+    },
+    "relative_order" : 5,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

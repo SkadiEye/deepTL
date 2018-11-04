@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1538850387264.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1654554086",
+    "id" : "6CFC4C02",
+    "lastKnownWriteTime" : 1538854815,
+    "last_content_update" : 1538854815371,
+    "path" : "C:/Users/xlmi/Dropbox (UFL)/Rpackages/deepTL/deepTL/R/3-1-predict.R",
+    "project_path" : "R/3-1-predict.R",
+    "properties" : {
+        "cursorPosition" : "16,18",
+        "scrollLine" : "0"
+    },
+    "relative_order" : 6,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

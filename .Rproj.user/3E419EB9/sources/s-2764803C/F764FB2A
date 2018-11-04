@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1538877464153.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "F764FB2A",
+    "lastKnownWriteTime" : 1538952247,
+    "last_content_update" : 1538952247,
+    "path" : "C:/Users/xlmi/Dropbox (UFL)/Rpackages/deepTL/deepTL/src/2-3-dnnet.cpp",
+    "project_path" : "src/2-3-dnnet.cpp",
+    "properties" : {
+        "cursorPosition" : "245,70",
+        "scrollLine" : "238"
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "cpp"
+}

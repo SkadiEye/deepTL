@@ -1,0 +1,20 @@
+{
+    "collab_server" : "",
+    "contents" : "###########################################################\n### Define functions: importDnnet and splitDnnet\n\n#' Import Data to create a \\code{dnnetInput} object.\n#'\n#' @param x A \\code{matrix} containing all samples/variables. It has to be \\code{numeric}\n#' and cannot be left blank. Any variable with missing value will be removed.\n#' @param y A \\code{numeric} or \\code{factor} vector, indicating a continuous outcome or class label.\n#' @param w A \\code{numeric} vector, the sample weight. Will be 1 if left blank.\n#'\n#' @return An \\code{dnnetInput} object.\n#'\n#' @importFrom methods new\n#'\n#' @seealso\n#' \\code{\\link{dnnetInput-class}}\n#' @export\nimportDnnet <- function(x, y, w = rep(1, length(y))) {\n\n  new(\"dnnetInput\", x = as.matrix(x), y = y, w = w)\n}\n\nimportTrt <- function(x, y, z) {\n\n  new(\"trtInput\", x = as.matrix(x), y = y, z = z)\n}\n\n#' A function to generate indice\n#'\n#' @param split As in \\code{\\link{dnnetInput-class}}.\n#' @param n Sample size\n#'\n#' @return Returns a integer vector of indice.\n#'\n#' @seealso\n#' \\code{\\link{dnnetInput-class}}\n#'\n#' @export\ngetSplitDnnet <- function(split, n) {\n\n  if(is.numeric(split) && length(split) == 1 && split < 1)\n    split <- sample(n, floor(n * split))\n\n  if(is.numeric(split) && length(split) == 1 && split > 1)\n    split <- 1:split\n\n  if(is.character(split) && length(split) == 1 && split == \"bootstrap\")\n    split <- sample(n, replace = TRUE)\n\n  split\n}\n\n#' A function to split the \\code{dnnetInput} object into a list of two \\code{dnnetInput} objects:\n#' one names train and the other named valid.\n#'\n#' @param object A \\code{dnnetInput} object.\n#' @param split A character, numeric variable or a numeric vector declaring a way to split\n#' the \\code{dnnetInput}. If it's number between 0 and 1, all samples will be split into two subsets\n#' randomly, with the \\code{train} containing such proportion of all samples and \\code{valid} containing\n#' the rest. If split is a character and is \"bootstrap\", the \\code{train} will be a bootstrap sample\n#' of the original data set and the \\code{valid} will contain out-of-bag samples. If split is a vector\n#' of integers, the \\code{train} will contain samples whose indice are in the vector, and \\code{valid} will\n#' contain the rest.\n#'\n#' @return Returns a list of two \\code{dnnetInput} objects.\n#'\n#' @seealso\n#' \\code{\\link{dnnetInput-class}}\n#'\n#' @export\nsplitDnnet <-function(object, split) {\n\n  split <- getSplitDnnet(split, dim(object@x)[1])\n\n  train <- object\n  train@x <- object@x[split, ]\n  train@y <- object@y[split]\n  train@w <- object@w[split]\n\n  valid <- object\n  valid@x <- object@x[-split, ]\n  valid@y <- object@y[-split]\n  valid@w <- object@w[-split]\n\n  list(train = train, valid = valid, split = split)\n}\n\nsplitTrt <-function(object, split) {\n\n  split <- getSplitDnnet(split, dim(object@x)[1])\n\n  train <- object\n  train@x <- object@x[split, ]\n  train@y <- object@y[split]\n  train@w <- object@z[split]\n\n  valid <- object\n  valid@x <- object@x[-split, ]\n  valid@y <- object@y[-split]\n  valid@w <- object@z[-split]\n\n  list(train = train, valid = valid, split = split)\n}\n",
+    "created" : 1541299336734.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1841935493",
+    "id" : "144B2EB2",
+    "lastKnownWriteTime" : 1541299404,
+    "last_content_update" : 1541299404462,
+    "path" : "~/Dropbox (UFL)/Rpackages/deepTL/deepTL/R/2-1-import.R",
+    "project_path" : "R/2-1-import.R",
+    "properties" : {
+    },
+    "relative_order" : 9,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

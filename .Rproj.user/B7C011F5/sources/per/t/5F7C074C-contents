@@ -1,0 +1,117 @@
+#!/usr/bin/env Rscript
+library("optparse")
+
+option_list = list(
+  make_option(c("-s", "--seed"), type="character", default=20180516,
+              help="seed", metavar="character"),
+  make_option(c("-r", "--rep"), type="character", default=10,
+              help="seed", metavar="character")
+);
+
+opt_parser = OptionParser(option_list=option_list);
+opt = parse_args(opt_parser);
+
+setwd("/ufrc/zou/xlmi/subgroup/simu_20181008/")
+source("../functions.R")
+
+library(methods)
+library(deepTL)
+library(MASS)
+n_sample <- 1000
+n_test <- 1000
+n_p <- 5
+n.iter <- 100
+
+set.seed(1000)
+beta0 <- rnorm(n_p)
+beta1 <- rnorm(n_p)
+beta2 <- rnorm(n_p)
+beta3 <- rnorm(n_p)
+
+cbind(beta0, beta1, beta2, beta3)
+
+set.seed(as.numeric(opt$seed))
+
+outfile <- paste0("subgroup_20181008.", opt$seed, ".csv")
+n.rep <- opt$rep
+result <- data.frame()
+for (j in 1:n.rep) {
+
+  x <- mvrnorm(n_sample, rep(0, n_p), diag(n_p))
+  prob.h <- as.numeric(1/(1+exp(x %*% beta0 * 2 + x[, 1]**2 - x[, 2]**2)))
+  h <- rbinom(n_sample, 1, prob.h)
+  prob.z <- as.numeric(1/(1+exp(x %*% beta1))) # 0.5 #
+  z <- rbinom(n_sample, 1, prob.z)
+  y <- ifelse(h,
+              x %*% beta2 + x[, 1]*x[, 2]*2 + z * (x %*% beta3 + x[, 1]**2 + x[, 2]**2 + 1),
+              x %*% beta2 + x[, 1]*x[, 2]*2 + z * (x %*% beta3 - x[, 1]**2 - x[, 2]**2 - 1)) * 2 + rnorm(n_sample)
+
+  x.test <- mvrnorm(n_test, rep(0, n_p), diag(n_p))
+  prob.h.test <- as.numeric(1/(1+exp(x.test %*% beta0 * 2 + x.test[, 1]**2 - x.test[, 2]**2)))
+  h.test <- rbinom(n_test, 1, prob.h.test)
+  prob.z.test <- as.numeric(1/(1+exp(x.test %*% beta1))) # 0.5 #
+  z.test <- rbinom(n_test, 1, prob.z.test)
+  y.test <- ifelse(h.test,
+                   x.test %*% beta2 + x.test[, 1]*x.test[, 2]*2 +
+                     z.test * (x.test %*% beta3 + x.test[, 1]**2 + x.test[, 2]**2 + 1),
+                   x.test %*% beta2 + x.test[, 1]*x.test[, 2]*2 +
+                     z.test * (x.test %*% beta3 - x.test[, 1]**2 - x.test[, 2]**2 - 1)) * 2 + rnorm(n_test)
+  y1.test <- (x.test %*% beta2 + x.test[, 1]*x.test[, 2]*2 +
+                z.test * (x.test %*% beta3 + x.test[, 1]**2 + x.test[, 2]**2 + 1)) * 2
+  y0.test <- (x.test %*% beta2 + x.test[, 1]*x.test[, 2]*2 +
+                z.test * (x.test %*% beta3 - x.test[, 1]**2 - x.test[, 2]**2 - 1)) * 2
+  # h.xz.test <- y1.test - y0.test
+
+  #### semi method
+  mod_semi <- semi_hidden(x, y, z, n.iter)
+  eval_semi <- eval_semi_hidden(mod_semi, h, x.test, y.test, z.test, h.test, prob.h.test, y1.test, y0.test)
+
+  mod_double <- double_hidden(x, y, z, n.iter)
+  eval_double <- eval_double_hidden(mod_double, h, x.test, y.test, z.test, h.test, prob.h.test, y1.test, y0.test)
+
+  #### oracle
+  oracle_dat <- data.frame(h = h, x = x, x12 = x[, 1]**2, x22 = x[, 2]**2)
+  oracle.glm <- glm(h ~ ., oracle_dat, family = "binomial")
+  oracle.gx.test <- predict(oracle.glm,
+                            data.frame(h = h.test, x = x.test,
+                                       x12 = x.test[, 1]**2, x22 = x.test[, 2]**2),
+                            type = "response")
+  oracle.acc <- mean((oracle.gx.test > 0.5) == h.test)
+  oracle.ent <- mean(-oracle.gx.test*log(prob.h.test) - (1-oracle.gx.test)*log(1-prob.h.test))
+
+  oracle_dat0 <- data.frame(y = y, h = h, z = z, x = x, x12 = x[, 1]*x[, 2], xz = x*z,
+                            zx12 = z*x[, 1]**2, zx22 = z*x[, 2]**2)
+  oracle.lm1 <- lm(y ~ . - h, oracle_dat0, subset = (h == 1))
+  oracle.lm0 <- lm(y ~ . - h, oracle_dat0, subset = (h == 0))
+  oracle_dat0_test <- data.frame(y = y.test, h = h.test, z = z.test, x = x.test,
+                                 x12 = x.test[, 1]*x.test[, 2], xz = x.test*z.test,
+                                 zx12 = z.test*x.test[, 1]**2, zx22 = z.test*x.test[, 2]**2)
+  oracle.f1 <- predict(oracle.lm1, oracle_dat0_test)
+  oracle.f0 <- predict(oracle.lm0, oracle_dat0_test)
+  oracle.ypd <- ifelse((oracle.gx.test > 0.5), oracle.f1, oracle.f0)
+
+  oracle.f1m <- mean((y1.test - oracle.f1)**2)
+  oracle.f0m <- mean((y0.test - oracle.f0)**2)
+  oracle.hxm <- mean((y1.test - y0.test - oracle.f1 + oracle.f0)**2)
+  oracle.y0m <- mean((y.test - oracle.ypd)**2)
+  oracle.h <- mean((((y - predict(oracle.lm1, oracle_dat0))**2 <
+                       (y - predict(oracle.lm0, oracle_dat0))**2)*1) == h)
+
+  if(! j %% 100) print(j)
+
+  result.i <- data.frame(method = c("Semi", "Double", "Oracle"),
+                         rbind(eval_semi, eval_double,
+                               c(oracle.h, oracle.f1m, oracle.f0m, oracle.hxm,
+                                 oracle.y0m, oracle.ent, oracle.acc)))
+  rownames(result.i) <- NULL
+  colnames(result.i) <- c("train.acc", "f1.mse", "f2.mse", "h.mse", "y.mse", "cross.entropy", "pred.acc")
+  result <- c(result, result.i)
+
+  print(result.i)
+
+  write.csv(result.i, outfile)
+}
+
+result
+
+

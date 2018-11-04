@@ -1,0 +1,33 @@
+ind <- paste0(rep(0:1, each = 100), rep(rep(0:9, each = 10), 2), rep(0:9, 20))
+getwd()
+setwd("D:/Dropbox (UFL)/Rpackages/deepTL/simu_20181008/")
+
+for (i in 1:length(ind)) {
+
+  con = file(paste("job", ind[i], ".sbatch", sep=''), "w")
+
+  cat("#!/bin/bash \n\n", file = con)
+  cat("#SBATCH --job-name=cnn", ind[i], " \n", sep = '', file = con)
+  cat("#SBATCH --mail-user=xlmi@ufl.edu \n",
+      "#SBATCH --mail-type=ALL \n", sep = '', file = con)
+  cat("#SBATCH --output cnn", ind[i], ".out \n", sep = '', file = con)
+  cat("#SBATCH --nodes=1 \n",
+      "#SBATCH --ntasks=1 \n",
+      "#SBATCH --cpus-per-task=1 \n",
+      "#SBATCH --mem=6gb \n",
+      "#SBATCH --time=95:00:00 \n",
+      "#SBATCH --account=zou \n",
+      "#SBATCH --qos=zou-b \n\n",
+      "module load R \n",
+      "cd /ufrc/zou/xlmi/subgroup/simu_20181008 \n", sep = '', file = con)
+
+  cat("Rscript simu0001_hidden_subgroup_20181008.R --seed",
+      ind[i], "--rep 5 \n", file = con)
+
+  close(con)
+}
+
+for (i in 1:length(ind)) {
+
+  cat("sbatch job", ind[i], ".sbatch \n", sep = '')
+}

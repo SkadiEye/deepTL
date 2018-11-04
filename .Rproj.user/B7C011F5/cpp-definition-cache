@@ -1,0 +1,17 @@
+[
+    {
+        "definitions" : [
+            {
+                "column" : 6,
+                "file" : "D:/Dropbox (UFL)/Rpackages/deepTL/deepTL/src/2-3-dnnet.cpp",
+                "kind" : 6,
+                "line" : 10,
+                "name" : "backprop(NumericVector, double, bool, List, List, NumericMatrix, NumericVector, NumericVector, bool, NumericMatrix, NumericVector, NumericVector, std::string, int, int, std::string, double, double, double, bool, int, std::string, double, double, double, double, std::string)",
+                "parent_name" : "",
+                "usr" : "c:@F@backprop#$@N@Rcpp@C@Vector>#VI14#@N@Rcpp@CT>1#T@PreserveStorage#d#b#$@N@Rcpp@C@Vector>#VI19#@N@Rcpp@CT>1#T@PreserveStorage#S1_#$@N@Rcpp@C@Matrix>#VI14#@N@Rcpp@CT>1#T@PreserveStorage#S0_#S0_#b#S2_#S0_#S0_#$@N@std@C@basic_string>#C#$@N@std@S@char_traits>#C#$@N@std@C@allocator>#C#I#I#S3_#d#d#d#b#I#S3_#d#d#d#d#S3_#"
+            }
+        ],
+        "file" : "D:/Dropbox (UFL)/Rpackages/deepTL/deepTL/src/2-3-dnnet.cpp",
+        "file_last_write" : 1538952247
+    }
+]

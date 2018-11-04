@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1538955738326.000,
+    "dirty" : true,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2402435169",
+    "id" : "37AA829",
+    "lastKnownWriteTime" : 1538852519,
+    "last_content_update" : 1538955750663,
+    "path" : "D:/Dropbox (UFL)/Rpackages/deepTL/deepTL/R/9-control.R",
+    "project_path" : "R/9-control.R",
+    "properties" : {
+        "cursorPosition" : "0,0",
+        "scrollLine" : "0"
+    },
+    "relative_order" : 3,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

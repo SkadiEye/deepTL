@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1538956202307.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1541908657",
+    "id" : "BCAF0DBE",
+    "lastKnownWriteTime" : 1538958669,
+    "last_content_update" : 1538958669581,
+    "path" : "D:/Dropbox (UFL)/Rpackages/deepTL/test_trt_00.R",
+    "project_path" : null,
+    "properties" : {
+        "cursorPosition" : "64,0",
+        "scrollLine" : "40"
+    },
+    "relative_order" : 4,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

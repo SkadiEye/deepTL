@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "#### Simulation Scenarios ####\np.use <- 5\nset.seed(10086)\nseed <- floor(runif(1)*100000)\nalpha1 <- runif(p.use) * 2 - 1\nalpha2 <- runif(p.use) * 2 - 1\n\nprob_z_sce <- function(scenario, x, alpha1 = alpha1) {\n\n  if(scenario == 1)\n    return(as.numeric(1/(1 + exp(1 - x[, 1:p.use] %*% alpha1))))\n  if(scenario == 2)\n    return(as.numeric(1/(1 + exp(1 - x[, 1:p.use] %*% alpha1 - x[, 8]**2))))\n  if(scenario == 3)\n    return(as.numeric(1/(1 + exp(1 - x[, 1:p.use] %*% alpha1 - 2 * cos(x[, 8])))))\n}\n\ny_sce <- function(scenario, x, beta.true, z, sigma, alpha2 = alpha2) {\n\n\n  if(scenario == 1)\n    return(-1 + beta.true * z + as.numeric(x[, 1:p.use] %*% alpha2) + rnorm(length(z)) * sigma)\n  if(scenario == 2)\n    return(-1 + beta.true * z + as.numeric(x[, 1:p.use] %*% alpha2) + abs(x[, 8]) * x[, 9]**2 + rnorm(length(z)) * sigma)\n  if(scenario == 3)\n    return(-1 + beta.true * z + as.numeric(x[, 1:p.use] %*% alpha2) - cos(x[, 8] * 2) + x[, 9]**2 + rnorm(length(z)) * sigma)\n}\n\nlm_naive <- function(x, y, z) {\n\n  lm_mod <- lm(y ~ z + x)\n  return(data.frame(method = \"lm-naive\",\n                    beta = coefficients(lm_mod)[\"z\"],\n                    var = vcov(lm_mod)[\"z\", \"z\"]))\n}\n\nps_naive <- function(x, y, z) {\n\n  ps_glm <- fitted(glm(z ~ x, family = \"binomial\"))\n  lm_mod <- lm(y ~ z + ps_glm)\n  return(data.frame(method = \"ps-naive\",\n                    beta = coefficients(lm_mod)[\"z\"],\n                    var = vcov(lm_mod)[\"z\", \"z\"]))\n}\n\nlm_oracle <- function(x, y, z, scenario) {\n\n  if(scenario == 2)\n    x <- cbind(x, abs(x[, 8]) * x[, 9]**2)\n  if(scenario == 3)\n    x <- cbind(x, cos(x[, 8] * 2), x[, 9]**2)\n\n  lm_mod <- lm(y ~ z + x)\n  return(data.frame(method = \"lm-oracle\",\n                    beta = coefficients(lm_mod)[\"z\"],\n                    var = vcov(lm_mod)[\"z\", \"z\"]))\n}\n\nlm_anova <- function(x, y, z) {\n\n  lm_mod <- lm(y ~ z)\n  return(data.frame(method = \"lm-naive\",\n                    beta = coefficients(lm_mod)[\"z\"],\n                    var = vcov(lm_mod)[\"z\", \"z\"]))\n}\n\n\n",
+    "created" : 1541303155841.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3874845135",
+    "id" : "9EAFFD02",
+    "lastKnownWriteTime" : 1541311292,
+    "last_content_update" : 1541311292189,
+    "path" : "~/Dropbox (UFL)/unknownProj/paper2/simulation-scenarios.R",
+    "project_path" : null,
+    "properties" : {
+        "tempName" : "Untitled2"
+    },
+    "relative_order" : 12,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

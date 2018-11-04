@@ -1,0 +1,156 @@
+semi_hidden <- function(x, y, z, n_iter) {
+
+  y_obj <- importDnnet(x = cbind(x, z), y = y)
+  f.base.mod <- ensemble_dnnet(y_obj, 100,
+                               esCtrl = list(n.hidden = c(20, 15, 10), n.epoch = 500, n.batch = 50,
+                                             early.stop = TRUE, early.stop.det = 1000, plot = FALSE,
+                                             norm.x = FALSE, norm.y = TRUE,
+                                             learning.rate.adaptive = "adam"))
+  f.xz <- predict(f.base.mod, cbind(x, z))
+  h.sim <- ifelse(y - f.xz > median(y - f.xz), 1, 0)
+  for(i in 1:n_iter) {
+
+    h_obj <- importDnnet(x = x, y = factor(ifelse(h.sim == 1, "A", "B")))
+    g.x.mod <- try(ensemble_dnnet(h_obj, 25, esCtrl = list(n.hidden = c(20, 15, 10), n.epoch = 250, n.batch = 50,
+                                                           early.stop = TRUE, early.stop.det = 1000, plot = FALSE,
+                                                           norm.x = FALSE, norm.y = TRUE,
+                                                           learning.rate.adaptive = "adam")))
+    g.x <- try(predict(g.x.mod, x)[, "A"])
+    y0_obj <- importDnnet(x = cbind(x, z), y = (y - f.xz)/(h.sim - g.x), w = (h.sim - g.x)**2)
+    h.xz.mod <- try(ensemble_dnnet(y0_obj, 25, esCtrl = list(n.hidden = c(20, 15, 10), n.epoch = 1000, n.batch = 50,
+                                                             early.stop = TRUE, early.stop.det = 1000, plot = FALSE,
+                                                             norm.x = FALSE, norm.y = TRUE,
+                                                             learning.rate.adaptive = "adam")))
+    h.xz <- predict(h.xz.mod, cbind(x, z))
+    sigma.sq <- mean((y - f.xz - (h.sim - g.x)*h.xz)**2)
+    h.sim.d <- -((y - f.xz - (1 - g.x)*h.xz)**2 - (y - f.xz + g.x*h.xz)**2)/sigma.sq/2 + log(g.x/(1-g.x))
+    h.sim <- rbinom(n_sample, 1, 1/(1+exp(-h.sim.d))) # (h.sim.d > 0)*1 #
+
+    # print(c(i, mean((y - f.xz - h.sim*h.xz)**2), median(g.x.mod@loss), median(h.xz.mod@loss)))
+
+    if(class(g.x.mod) == "try-error" || class(h.xz.mod) == "try-error")
+      break
+  }
+  h.sim <- (h.sim.d > 0)*1
+  h_obj <- importDnnet(x = x, y = factor(ifelse(h.sim == 1, "A", "B")))
+  g.x.mod <- try(ensemble_dnnet(h_obj, 100, esCtrl = list(n.hidden = c(20, 15, 10), n.epoch = 250, n.batch = 50,
+                                                          early.stop = TRUE, early.stop.det = 1000, plot = FALSE,
+                                                          norm.x = FALSE, norm.y = TRUE,
+                                                          learning.rate.adaptive = "adam")))
+  g.x <- try(predict(g.x.mod, x)[, "A"])
+  y0_obj <- importDnnet(x = cbind(x, z), y = (y - f.xz)/(h.sim - g.x), w = (h.sim - g.x)**2)
+  h.xz.mod <- try(ensemble_dnnet(y0_obj, 100, esCtrl = list(n.hidden = c(20, 15, 10), n.epoch = 1000, n.batch = 50,
+                                                            early.stop = TRUE, early.stop.det = 1000, plot = FALSE,
+                                                            norm.x = FALSE, norm.y = TRUE,
+                                                            learning.rate.adaptive = "adam")))
+  h.xz <- predict(h.xz.mod, cbind(x, z))
+
+  return(list(f_xz = f.base.mod,
+              g_x = g.x.mod,
+              h_xz = h.xz.mod,
+              h_sim = h.sim))
+}
+
+eval_semi_hidden <- function(mod, h, x.test, y.test, z.test, h.test, prob.h.test, y1.test, y0.test) {
+
+  gx.test <- predict(mod$g_x, x.test)[, "A"]
+  fxz.test <- predict(mod$f_xz, cbind(x.test, z.test))
+  hxz.test <- predict(mod$h_xz, cbind(x.test, z.test))
+  h.sim.test <- (gx.test > 0.5)*1
+  f1.pred <- fxz.test + (1-gx.test)*hxz.test
+  f0.pred <- fxz.test - gx.test*hxz.test
+  y.test.pred <- fxz.test + (h.sim.test - gx.test)*hxz.test
+
+  tr.acc <- max(mean(mod$h_sim == h),
+                mean(mod$h_sim != h))
+  f1.mse <- mean((y.test - f1.pred)[h.test == 1]**2)
+  f0.mse <- mean((y.test - f0.pred)[h.test == 0]**2)
+  hx.mse <- min(mean((y1.test - y0.test - hxz.test)**2),
+                mean((y1.test - y0.test + hxz.test)**2))
+  y0.mse <- mean((y.test - y.test.pred)**2)
+  cr.ent <- min(mean(-gx.test*log(prob.h.test) - (1-gx.test)*log(1-prob.h.test)),
+                mean(-(1-gx.test)*log(prob.h.test) - gx.test*log(1-prob.h.test)))
+  pr.acc <- max(mean(h.sim.test == h.test),
+                mean(h.sim.test != h.test))
+
+  return(c(tr.acc, f1.mse, f0.mse, hx.mse, y0.mse, cr.ent, pr.acc))
+}
+
+double_hidden <- function(x, y, z, n_iter) {
+
+  h.sim <- ifelse(y > median(y), 1, 0)
+  for(i in 1:n_iter) {
+
+    y1_obj <- importDnnet(y = y[h.sim == 1], x = cbind(x[h.sim == 1, ], z[h.sim == 1]))
+    f1.x.mod <- try(ensemble_dnnet(y1_obj, 25, esCtrl = list(n.hidden = c(20, 15, 10), n.epoch = 500, n.batch = 50,
+                                                         early.stop = TRUE, early.stop.det = 1000, plot = FALSE,
+                                                         norm.x = FALSE, norm.y = TRUE,
+                                                         learning.rate.adaptive = "adam")))
+    f1.x <- try(predict(f1.x.mod, cbind(x, z)))
+    y0_obj <- importDnnet(y = y[h.sim == 0], x = cbind(x[h.sim == 0, ], z[h.sim == 0]))
+    f0.x.mod <- try(ensemble_dnnet(y0_obj, 25, esCtrl = list(n.hidden = c(20, 15, 10), n.epoch = 500, n.batch = 50,
+                                                         early.stop = TRUE, early.stop.det = 1000, plot = FALSE,
+                                                         norm.x = FALSE, norm.y = TRUE,
+                                                         learning.rate.adaptive = "adam")))
+    f0.x <- try(predict(f0.x.mod, cbind(x, z)))
+    sigma.sq <- (sum((y[h.sim == 1] - f1.x[h.sim == 1])**2) +
+                   sum((y[h.sim == 0] - f0.x[h.sim == 0])**2))/length(y)
+    h.sim.d <- -((y - f1.x)**2 - (y - f0.x)**2)/sigma.sq/2 # + log(g.x/(1-g.x))
+    h.sim <- rbinom(n_sample, 1, 1/(1+exp(-h.sim.d))) # (h.sim.d > 0)*1 #
+
+    # print(c(i, mean((y - h.sim*f1.x - (1-h.sim)*f0.x)**2), median(f1.x.mod@loss), median(f0.x.mod@loss)))
+
+    if(class(f1.x.mod) == "try-error" || class(f0.x.mod) == "try-error")
+      break
+  }
+  h.sim <- (h.sim.d > 0)*1
+  y1_obj <- importDnnet(y = y[h.sim == 1], x = cbind(x[h.sim == 1, ], z[h.sim == 1]))
+  f1.x.mod <- try(ensemble_dnnet(y1_obj, 100, esCtrl = list(n.hidden = c(20, 15, 10), n.epoch = 500, n.batch = 50,
+                                                            early.stop = TRUE, early.stop.det = 1000, plot = FALSE,
+                                                            norm.x = FALSE, norm.y = TRUE,
+                                                            learning.rate.adaptive = "adam")))
+  f1.x <- try(predict(f1.x.mod, cbind(x, z)))
+  y0_obj <- importDnnet(y = y[h.sim == 0], x = cbind(x[h.sim == 0, ], z[h.sim == 0]))
+  f0.x.mod <- try(ensemble_dnnet(y0_obj, 100, esCtrl = list(n.hidden = c(20, 15, 10), n.epoch = 500, n.batch = 50,
+                                                            early.stop = TRUE, early.stop.det = 1000, plot = FALSE,
+                                                            norm.x = FALSE, norm.y = TRUE,
+                                                            learning.rate.adaptive = "adam")))
+  f0.x <- try(predict(f0.x.mod, cbind(x, z)))
+
+  h_obj <- importDnnet(y = factor(ifelse(h.sim == 1, "A", "B")), x = x)
+  g.x.mod <- ensemble_dnnet(h_obj, 100, esCtrl = list(n.hidden = c(20, 15, 10), n.epoch = 250, n.batch = 50,
+                                                      early.stop = TRUE, early.stop.det = 1000, plot = FALSE,
+                                                      norm.x = FALSE, norm.y = TRUE,
+                                                      learning.rate.adaptive = "adam"))
+
+  return(list(f1_xz = f1.x.mod,
+              f0_xz = f0.x.mod,
+              g_x = g.x.mod,
+              h_sim = h.sim))
+}
+
+eval_double_hidden <- function(mod, h, x.test, y.test, z.test, h.test, prob.h.test, y1.test, y0.test) {
+
+  gx.test <- predict(mod$g_x, x.test)[, "A"]
+  f1xz.test <- predict(mod$f1_xz, cbind(x.test, z.test))
+  f0xz.test <- predict(mod$f0_xz, cbind(x.test, z.test))
+  h.sim.test <- (gx.test > 0.5)*1
+  y.test.pred <- h.sim.test * f1xz.test + (1 - h.sim.test)*f0xz.test
+
+  tr.acc <- max(mean(mod$h_sim == h),
+                mean(mod$h_sim != h))
+  f1.mse <- min(mean((y1.test - f1xz.test)**2),
+                mean((y1.test - f0xz.test)**2))
+  f0.mse <- min(mean((y0.test - f1xz.test)**2),
+                mean((y0.test - f0xz.test)**2))
+  hx.mse <- min(mean(((y1.test - y0.test) - (f1xz.test - f0xz.test))**2),
+                mean(((y1.test - y0.test) + (f1xz.test - f0xz.test))**2))
+  y0.mse <- mean((y.test - y.test.pred)**2)
+  cr.ent <- min(mean(-gx.test*log(prob.h.test) - (1-gx.test)*log(1-prob.h.test)),
+                mean(-(1-gx.test)*log(prob.h.test) - gx.test*log(1-prob.h.test)))
+  pr.acc <- max(mean(h.sim.test == h.test),
+                mean(h.sim.test != h.test))
+
+  return(c(tr.acc, f1.mse, f0.mse, hx.mse, y0.mse, cr.ent, pr.acc))
+}
+
