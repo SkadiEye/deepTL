@@ -94,8 +94,15 @@ for (j in 1:n.rep) {
   oracle.f0m <- mean((y0.test - oracle.f0)**2)
   oracle.hxm <- mean((y1.test - y0.test - oracle.f1 + oracle.f0)**2)
   oracle.y0m <- mean((y.test - oracle.ypd)**2)
-  oracle.h <- mean((((y - predict(oracle.lm1, oracle_dat0))**2 <
-                       (y - predict(oracle.lm0, oracle_dat0))**2)*1) == h)
+  # oracle.h <- mean((((y - predict(oracle.lm1, oracle_dat0))**2 <
+  #                      (y - predict(oracle.lm0, oracle_dat0))**2)*1) == h)
+  
+  oracle.sigma.sq <- mean((y - h*predict(oracle.lm1, oracle_dat0) - 
+                             (1-h)*predict(oracle.lm0, oracle_dat0))**2)
+  oracle.h <- -((y - predict(oracle.lm1, oracle_dat0))**2 - 
+                  (y - predict(oracle.lm0, oracle_dat0))**2)/2/oracle.sigma.sq + 
+    log(fitted(oracle.glm)/(1-fitted(oracle.glm)))
+  oracle.h <- mean((oracle.h > 0) == h)
 
   if(! j %% 100) print(j)
 
@@ -104,12 +111,12 @@ for (j in 1:n.rep) {
                                c(oracle.h, oracle.f1m, oracle.f0m, oracle.hxm,
                                  oracle.y0m, oracle.ent, oracle.acc)))
   rownames(result.i) <- NULL
-  colnames(result.i) <- c("train.acc", "f1.mse", "f2.mse", "h.mse", "y.mse", "cross.entropy", "pred.acc")
-  result <- c(result, result.i)
+  colnames(result.i) <- c("method", "train.acc", "f1.mse", "f2.mse", "h.mse", "y.mse", "cross.entropy", "pred.acc")
+  result <- rbind(result, result.i)
 
   print(result.i)
 
-  write.csv(result.i, outfile)
+  write.csv(result, outfile)
 }
 
 result

@@ -8,10 +8,10 @@
                 "line" : 10,
                 "name" : "backprop(NumericVector, double, bool, List, List, NumericMatrix, NumericVector, NumericVector, bool, NumericMatrix, NumericVector, NumericVector, std::string, int, int, std::string, double, double, double, bool, int, std::string, double, double, double, double, std::string)",
                 "parent_name" : "",
-                "usr" : "c:@F@backprop#$@N@Rcpp@C@Vector>#VI14#@N@Rcpp@CT>1#T@PreserveStorage#d#b#$@N@Rcpp@C@Vector>#VI19#@N@Rcpp@CT>1#T@PreserveStorage#S1_#$@N@Rcpp@C@Matrix>#VI14#@N@Rcpp@CT>1#T@PreserveStorage#S0_#S0_#b#S2_#S0_#S0_#$@N@std@C@basic_string>#C#$@N@std@S@char_traits>#C#$@N@std@C@allocator>#C#I#I#S3_#d#d#d#b#I#S3_#d#d#d#d#S3_#"
+                "usr" : "c:@F@backprop#I#d#b#I#I#I#I#I#b#I#I#I#$@N@std@C@basic_string>#C#$@N@std@S@char_traits>#C#$@N@std@C@allocator>#C#I#I#S0_#d#d#d#b#I#S0_#d#d#d#d#S0_#"
             }
         ],
         "file" : "C:/Users/xlmi/Dropbox (UFL)/Rpackages/deepTL/deepTL/src/2-3-dnnet.cpp",
-        "file_last_write" : 1538875669
+        "file_last_write" : 1538952247
     }
 ]

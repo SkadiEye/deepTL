@@ -1,0 +1,162 @@
+setGeneric("teeSemi_new",
+           function(object, regCtrl, wclsCtrl, ...) standardGeneric("teeSemi_new")
+)
+
+setMethod("teeSemi_new",
+          "TrtDataObj", 
+          function(object, regCtrl, wclsCtrl, additional = NULL, ...) {
+            
+            cat("  Cls:  ", ctrl.names(wclsCtrl), "\n")
+            
+            clsObj <- methods::new("wClsObj", Y = object@trtLabl, X = object@X, 
+                                   weight = rep(1, length(object@trtLabl)), 
+                                   Y.lvl = object@trtLevl)
+            clsArg <- removeArg(wclsCtrl, "machine")
+            if(wclsCtrl$machine != "cvGrid")
+              clsArg <- appendArg(clsArg, "object", clsObj, 1)
+            else
+              clsArg <- appendArg(clsArg, "trainObj", clsObj, 1)
+            zMod <- do.call(wclsCtrl$machine, clsArg)
+            zPred <- predict(zMod, clsObj)@prob[, 1]
+            
+            lm.mod <- lm(object@trtResp ~ (object@trtLabl == object@trtLevl[1]) + zPred)
+            result <- data.frame(beta.est = coefficients(lm.mod)[2],
+                                 beta.var = vcov(lm.mod)[2, 2],
+                                 framework = tee.names("teePS"),
+                                 sub = "reg",
+                                 regCtrl = "",
+                                 clsCtrl = ctrl.names(wclsCtrl))
+            
+            if("Old" %in% additional) {
+              
+              cat("  Reg:  ", ctrl.names(regCtrl), "\n")
+              
+              regObj <- methods::new("RegObj", Y = object@trtResp, X = object@X)
+              regArg <- removeArg(regCtrl, "machine")
+              if(regCtrl$machine != "cvGrid")
+                regArg <- appendArg(regArg, "object", regObj, 1)
+              else
+                regArg <- appendArg(regArg, "trainObj", regObj, 1)
+              yMod <- do.call(regCtrl$machine, regArg)
+              yPred <- predict(yMod, regObj)@pred
+              
+              syy <- sum((object@trtResp - yPred)**2)
+              szz <- sum(((object@trtLabl == object@trtLevl[1]) - zPred)**2)
+              syyzz <- sum((object@trtResp - yPred)*((object@trtLabl == object@trtLevl[1]) - zPred))
+              
+              beta.est <- syyzz/szz
+              beta.var <- (syy/szz - 2*syyzz/szz*beta.est + beta.est**2)/dim(object@X)[1]
+              
+              result <- rbind(result, data.frame(beta.est = beta.est, beta.var = beta.var,
+                                                 framework = tee.names("teeSemi"),
+                                                 sub = '',
+                                                 regCtrl = ctrl.names(regCtrl),
+                                                 clsCtrl = ctrl.names(wclsCtrl)))
+            }
+            
+            resp <- object@trtResp
+            object@trtResp <- object@trtResp - coefficients(lm.mod)[2] * (object@trtLabl == object@trtLevl[1])
+            
+            cat("  Reg:  ", ctrl.names(regCtrl), "\n")
+            
+            regObj <- methods::new("RegObj", Y = object@trtResp, X = object@X)
+            regArg <- removeArg(regCtrl, "machine")
+            if(regCtrl$machine != "cvGrid")
+              regArg <- appendArg(regArg, "object", regObj, 1)
+            else
+              regArg <- appendArg(regArg, "trainObj", regObj, 1)
+            yMod <- do.call(regCtrl$machine, regArg)
+            yPred <- predict(yMod, regObj)@pred
+            
+            syy <- sum((object@trtResp - yPred)**2)
+            szz <- sum(((object@trtLabl == object@trtLevl[1]) - zPred)**2)
+            syyzz <- sum((object@trtResp - yPred)*((object@trtLabl == object@trtLevl[1]) - zPred))
+            
+            beta.est <- syyzz/szz
+            beta.var <- (syy/szz - 2*syyzz/szz*beta.est + beta.est**2)/dim(object@X)[1]
+            
+            result <- rbind(result, data.frame(beta.est = beta.est + coefficients(lm.mod)[2], beta.var = beta.var,
+                                               framework = tee.names("teeSemi_new"),
+                                               sub = '',
+                                               regCtrl = ctrl.names(regCtrl),
+                                               clsCtrl = ctrl.names(wclsCtrl)))
+            
+            if("Double" %in% additional) {
+              
+              ind1 <- which(object@trtLabl == object@trtLevl[1])
+              
+              cat("  Reg:  ", ctrl.names(regCtrl), "\n")
+              
+              regObj1 <- methods::new("RegObj", Y = resp[ind1], X = object@X[ind1, ])
+              regArg1 <- removeArg(regCtrl, "machine")
+              if(regCtrl$machine != "cvGrid")
+                regArg1 <- appendArg(regArg1, "object", regObj1, 1)
+              else
+                regArg1 <- appendArg(regArg1, "trainObj", regObj1, 1)
+              yMod1 <- do.call(regCtrl$machine, regArg1)
+              yPred1 <- predict(yMod1, regObj)@pred
+              
+              cat("  Reg:  ", ctrl.names(regCtrl), "\n")
+              
+              regObj0 <- methods::new("RegObj", Y = resp[-ind1], X = object@X[-ind1, ])
+              regArg0 <- removeArg(regCtrl, "machine")
+              if(regCtrl$machine != "cvGrid")
+                regArg0 <- appendArg(regArg0, "object", regObj0, 1)
+              else
+                regArg0 <- appendArg(regArg0, "trainObj", regObj0, 1)
+              yMod0 <- do.call(regCtrl$machine, regArg0)
+              yPred0 <- predict(yMod0, regObj)@pred
+              
+              ind <- which(zPred < 1 & zPred > 0)
+              y <- resp[ind]
+              z <- ((object@trtLabl == object@trtLevl[1])*1)[ind]
+              ps <- zPred[ind]
+              m1 <- yPred1[ind]
+              m0 <- yPred0[ind]
+              beta.est <- mean((z*y - m1*(z-ps))/ps - ((1-z)*y + m0*(z-ps))/(1-ps))
+              beta.var <- sum(((z*y - m1*(z-ps))/ps - ((1-z)*y + m0*(z-ps))/(1-ps) - beta.est)**2)/length(ind)**2
+              
+              result <- rbind(result, data.frame(beta.est = beta.est, beta.var = beta.var,
+                                                 framework = tee.names("teePS"),
+                                                 sub = 'Double Robust',
+                                                 regCtrl = ctrl.names(regCtrl),
+                                                 clsCtrl = ctrl.names(wclsCtrl)))
+              
+              ipw1 <- mean(z*y/ps - (1-z)*y/(1-ps))
+              ipw1.var <- mean((z*y/ps - (1-z)*y/(1-ps) - ipw1)**2)/length(y)
+              
+              mu1 <- mean(z*y/ps)/mean(z/ps)
+              mu0 <- mean((1-z)*y/(1-ps))/mean((1-z)/(1-ps))
+              ipw2 <- mu1 - mu0
+              ipw2.var <- mean((z*(y-mu1)/ps - (1-z)*(y-mu0)/(1-ps))**2)/length(y)
+              
+              c1 <- mean((z-ps)/ps) / mean((z-ps)^2/ps^2)
+              c0 <- -mean((z-ps)/(1-ps)) / mean((z-ps)^2/(1-ps)^2)
+              mu1 <- mean(z*y/ps*(1-c1/ps))/mean(z/ps*(1-c1/ps))
+              mu0 <- mean((1-z)*y/(1-ps)*(1-c0/(1-ps)))/mean((1-z)/(1-ps)*(1-c0/(1-ps)))
+              ipw3 <- mu1 - mu0
+              eta1 <- -sum(z*(y-mu1)/ps**2) / sum((z-ps)**2/ps**2)
+              eta0 <- -sum((1-z)*(y-mu0)/(1-ps)**2) / sum((z-ps)**2/(1-ps)**2)
+              ipw3.var <- mean(((z*(y-mu1)+eta1*(z-ps))/ps - ((1-z)*(y-mu0)-eta0*(z-ps))/(1-ps))**2)/length(y)
+              
+              result <- rbind(result, data.frame(beta.est = ipw1, beta.var = ipw1.var,
+                                                 framework = tee.names("teePS"),
+                                                 sub = 'ipw1',
+                                                 regCtrl = ctrl.names(regCtrl),
+                                                 clsCtrl = ctrl.names(wclsCtrl)))
+              result <- rbind(result, data.frame(beta.est = ipw2, beta.var = ipw2.var,
+                                                 framework = tee.names("teePS"),
+                                                 sub = 'ipw2',
+                                                 regCtrl = ctrl.names(regCtrl),
+                                                 clsCtrl = ctrl.names(wclsCtrl)))
+              result <- rbind(result, data.frame(beta.est = ipw3, beta.var = ipw3.var,
+                                                 framework = tee.names("teePS"),
+                                                 sub = 'ipw3',
+                                                 regCtrl = ctrl.names(regCtrl),
+                                                 clsCtrl = ctrl.names(wclsCtrl)))
+            }
+            
+            rownames(result) <- NULL
+            
+            return(result)
+          })

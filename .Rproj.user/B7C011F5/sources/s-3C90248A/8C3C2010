@@ -5,7 +5,7 @@
     "dirty" : false,
     "encoding" : "UTF-8",
     "folds" : "",
-    "hash" : "18990031",
+    "hash" : "0",
     "id" : "8C3C2010",
     "lastKnownWriteTime" : 1538870031,
     "last_content_update" : 1538870031,
@@ -13,7 +13,7 @@
     "project_path" : "R/3-1-predict.R",
     "properties" : {
         "cursorPosition" : "21,54",
-        "scrollLine" : "13"
+        "scrollLine" : "0"
     },
     "relative_order" : 13,
     "source_on_save" : false,

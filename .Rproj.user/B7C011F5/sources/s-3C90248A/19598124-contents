@@ -130,7 +130,7 @@ model_keras %>% fit(
   y_train,
   batch_size = batch_size,
   epochs = epochs,
-  verbose = 0,
+  # verbose = 0,
   validation_split = 0.2, 
   callbacks = ModelCheckpoint(paste(opt$seed1, opt$seed2, 'double', sep = '.'), save_best_only = TRUE)
 )

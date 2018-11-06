@@ -39,7 +39,7 @@ double_deepTL <- function(object,
       y_star_mod <- do.call("ensemble_dnnet", appendArg(en_dnn_ctrl2, "object", y_star_obj, TRUE))
       y_star_pred <- predict(y_star_mod, object@x)
       beta_est <- sum((object@y - beta1 * z_nmrc - y_star_pred) * (z_nmrc - z_pred)) / sum((z_nmrc - z_pred)**2) + beta1
-      beta_var <- mean(((object@y - beta1 * z_nmrc - y_star_pred) - beta_est * (z_nmrc - z_pred))**2) / sum((z_nmrc - z_pred)**2)
+      beta_var <- mean(((object@y - beta1 * z_nmrc - y_star_pred) - (beta_est - beta1) * (z_nmrc - z_pred))**2) / sum((z_nmrc - z_pred)**2)
       result <- rbind(result, data.frame(method = "revised-semi-dnn-en", beta = beta_est, var = beta_var))
     }
   }
