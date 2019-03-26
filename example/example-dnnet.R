@@ -5,6 +5,13 @@ p <- 5
 n_test <- 10000
 
 par(mfrow = 2:3)
+n_ensemble <- 10
+esCtrl1 <- list(n.hidden = c(30, 20, 10),
+                l1.reg = 10**-4, n.batch = 50, n.epoch = 100, early.stop.det = 1000,
+                plot = TRUE, accel = "rcpp", learning.rate.adaptive = "adam")
+esCtrl2 <- esCtrl1
+esCtrl2$n.epoch <- 500
+
 #### Example I: Regression
 x <- matrix(rnorm(n*p), n, p)
 y <- rowMeans(x**2) + rnorm(n)
@@ -14,20 +21,12 @@ y_test <- rowMeans(x_test**2) + rnorm(n_test)
 
 dnn_dat <- importDnnet(x, y)
 dnn_spl <- splitDnnet(dnn_dat, 0.8)
-dnn_mod_cont <- dnnet(dnn_spl$train, validate = dnn_spl$valid,
-                      n.hidden = c(30, 20, 10),
-                      l1.reg = 10**-4, n.batch = 50, n.epoch = 100, early.stop.det = 1000, plot = TRUE,
-                      accel = "rcpp", learning.rate.adaptive = "adam")
+args_dnnet <- appendArg(appendArg(esCtrl1, "train", dnn_spl$train, TRUE), "validate", dnn_spl$valid, TRUE)
+dnn_mod_cont <- do.call(dnnet, args_dnnet)
 pred_cont <- predict(dnn_mod_cont, x_test)
-# mean((pred_cont - y_test)**2)
 
-bag_mod_cont <- ensemble_dnnet(dnn_dat, 10,
-                               esCtrl = list(n.hidden = c(30, 20, 10),
-                                             l1.reg = 10**-4, n.batch = 50, n.epoch = 100, early.stop.det = 1000,
-                                             plot = TRUE,
-                                             accel = "rcpp", learning.rate.adaptive = "adam"))
+bag_mod_cont <- ensemble_dnnet(dnn_dat, n_ensemble, esCtrl = esCtrl1)
 pred_cont_bag <- predict(bag_mod_cont, x_test)
-# mean((pred_cont_bag - y_test)**2)
 
 cat("------- Example I: Regression ------- \n",
     "      True MSE:", round(mean((y_test - rowMeans(x_test**2))**2), 4), "\n",
@@ -46,18 +45,12 @@ y_test <- factor(ifelse(rowMeans(x_test**2) > 1, "A", "B"), levels = c("A", "B")
 
 dnn_dat <- importDnnet(x, y, w)
 dnn_spl <- splitDnnet(dnn_dat, 0.8)
-dnn_mod_bnry <- dnnet(dnn_spl$train, validate = dnn_spl$valid,
-                      n.hidden = c(30, 20, 10),
-                      l1.reg = 10**-4, n.batch = 50, n.epoch = 100, early.stop.det = 1000, plot = TRUE,
-                      accel = "rcpp", learning.rate.adaptive = "adam")
+args_dnnet <- appendArg(appendArg(esCtrl1, "train", dnn_spl$train, TRUE), "validate", dnn_spl$valid, TRUE)
+dnn_mod_bnry <- do.call(dnnet, args_dnnet)
 pred_bnry <- predict(dnn_mod_bnry, x_test)
 # table(factor(ifelse(pred_bnry[, "A"] > 0.5, "A", "B")), y_test)
 
-bag_mod_bnry <- ensemble_dnnet(dnn_dat, 10,
-                               esCtrl = list(n.hidden = c(30, 20, 10),
-                                             l1.reg = 10**-4, n.batch = 50, n.epoch = 100, early.stop.det = 1000,
-                                             plot = TRUE,
-                                             accel = "rcpp", learning.rate.adaptive = "adam"))
+bag_mod_bnry <- ensemble_dnnet(dnn_dat, n_ensemble, esCtrl = esCtrl1)
 pred_gnry_bag <- predict(bag_mod_bnry, x_test)
 # table(factor(ifelse(pred_gnry_bag[, "A"] > 0.5, "A", "B")), y_test)
 
@@ -77,18 +70,12 @@ y_test <- factor(ifelse(runif(n_test) < prob_test, "A", "B"), levels = c("A", "B
 
 dnn_dat <- importDnnet(x, y)
 dnn_spl <- splitDnnet(dnn_dat, 0.8)
-dnn_mod_bnry <- dnnet(dnn_spl$train, validate = dnn_spl$valid,
-                      n.hidden = c(30, 20, 10),
-                      l1.reg = 10**-4, n.batch = 50, n.epoch = 100, early.stop.det = 1000, plot = TRUE,
-                      accel = "rcpp", learning.rate.adaptive = "adam")
+args_dnnet <- appendArg(appendArg(esCtrl1, "train", dnn_spl$train, TRUE), "validate", dnn_spl$valid, TRUE)
+dnn_mod_bnry <- do.call(dnnet, args_dnnet)
 pred_bnry <- predict(dnn_mod_bnry, x_test)
 # table(factor(ifelse(pred_bnry[, "A"] > 0.5, "A", "B")), y_test)
 
-bag_mod_bnry <- ensemble_dnnet(dnn_dat, 10,
-                               esCtrl = list(n.hidden = c(30, 20, 10),
-                                             l1.reg = 10**-4, n.batch = 50, n.epoch = 100, early.stop.det = 1000,
-                                             plot = TRUE,
-                                             accel = "rcpp", learning.rate.adaptive = "adam"))
+bag_mod_bnry <- ensemble_dnnet(dnn_dat, n_ensemble, esCtrl = esCtrl1)
 pred_gnry_bag <- predict(bag_mod_bnry, x_test)
 # table(factor(ifelse(pred_gnry_bag[, "A"] > 0.5, "A", "B")), y_test)
 
@@ -108,55 +95,33 @@ y_test <- factor(apply(prob_test, 1, function(x) which.max(rmultinom(1, 1, x))))
 
 dnn_dat <- importDnnet(x, y)
 dnn_spl <- splitDnnet(dnn_dat, 0.8)
-dnn_mod_mult <- dnnet(dnn_spl$train, validate = dnn_spl$valid,
-                      n.hidden = c(30, 20, 10),
-                      l1.reg = 10**-4,
-                      n.batch = 50, n.epoch = 500, early.stop.det = 1000, plot = TRUE,
-                      accel = "rcpp", learning.rate.adaptive = "adam")
+args_dnnet <- appendArg(appendArg(esCtrl2, "train", dnn_spl$train, TRUE), "validate", dnn_spl$valid, TRUE)
+dnn_mod_mult <- do.call(dnnet, args_dnnet)
 pred_mult <- predict(dnn_mod_mult, x_test)
 # table(apply(pred_mult, 1, which.max), y_test)
-# sum(diag(table(apply(pred_mult, 1, which.max), y_test)))/sum(table(apply(pred_mult, 1, which.max), y_test))
 
-bag_mod_mult <- ensemble_dnnet(dnn_dat, 10,
-                               esCtrl = list(n.hidden = c(30, 20, 10),
-                                             l1.reg = 10**-4, n.batch = 50, n.epoch = 500, early.stop.det = 1000,
-                                             plot = TRUE,
-                                             accel = "rcpp", learning.rate.adaptive = "adam"))
+bag_mod_mult <- ensemble_dnnet(dnn_dat, n_ensemble, esCtrl = esCtrl2)
 pred_multi_bag <- predict(bag_mod_mult, x_test)
 # table(apply(pred_multi_bag, 1, which.max), y_test)
-# sum(diag(table(apply(pred_multi_bag, 1, which.max), y_test)))/sum(table(apply(pred_multi_bag, 1, which.max), y_test))
 
 #### ordinal
 dnn_dat <- importDnnet(x, factor(y, ordered = TRUE))
 dnn_spl <- splitDnnet(dnn_dat, dnn_spl$split)
-dnn_mod_ordi <- dnnet(dnn_spl$train, validate = dnn_spl$valid,
-                      n.hidden = c(30, 20, 10),
-                      l1.reg = 10**-4,
-                      n.batch = 50, n.epoch = 500, early.stop.det = 1000, plot = TRUE,
-                      accel = "rcpp", learning.rate.adaptive = "adam")
+args_dnnet <- appendArg(appendArg(esCtrl2, "train", dnn_spl$train, TRUE), "validate", dnn_spl$valid, TRUE)
+dnn_mod_ordi <- do.call(dnnet, args_dnnet)
 pred_ordi <- predict(dnn_mod_ordi, x_test)
 # table(apply(pred_ordi, 1, which.max), y_test)
-# sum(diag(table(apply(pred_ordi, 1, which.max), y_test)))/sum(table(apply(pred_ordi, 1, which.max), y_test))
 
-bag_mod_ordi <- ensemble_dnnet(dnn_dat, 10,
-                               esCtrl = list(n.hidden = c(30, 20, 10),
-                                             l1.reg = 10**-4, n.batch = 50, n.epoch = 500, early.stop.det = 1000,
-                                             plot = TRUE,
-                                             accel = "rcpp", learning.rate.adaptive = "adam"))
+bag_mod_ordi <- ensemble_dnnet(dnn_dat, n_ensemble, esCtrl = esCtrl2)
 pred_ordi_bag <- predict(bag_mod_ordi, x_test)
 # table(apply(pred_ordi_bag, 1, which.max), y_test)
-# sum(diag(table(apply(pred_ordi_bag, 1, which.max), y_test)))/sum(table(apply(pred_ordi_bag, 1, which.max), y_test))
 
 cat("------- Example IV: Multi Classification I ------- \n",
     "                True mis-class rate:", 0, "\n",
-    "         DNN (Multi) mis-class rate:", round(1-sum(diag(table(apply(pred_mult, 1, which.max), y_test)))/
-                                                    sum(table(apply(pred_mult, 1, which.max), y_test)), 4), "\n",
-    "  Bagged DNN (Multi) mis-class rate:", round(1-sum(diag(table(apply(pred_multi_bag, 1, which.max), y_test)))/
-                                                    sum(table(apply(pred_multi_bag, 1, which.max), y_test)), 4), "\n",
-    "       DNN (Ordinal) mis-class rate:", round(1-sum(diag(table(apply(pred_ordi, 1, which.max), y_test)))/
-                                                    sum(table(apply(pred_ordi, 1, which.max), y_test)), 4), "\n",
-    "Bagged DNN (Ordinal) mis-class rate:", round(1-sum(diag(table(apply(pred_ordi_bag, 1, which.max), y_test)))/
-                                                    sum(table(apply(pred_ordi_bag, 1, which.max), y_test)), 4), "\n")
+    "         DNN (Multi) mis-class rate:", round(mean(apply(pred_mult, 1, which.max) != y_test), 4), "\n",
+    "  Bagged DNN (Multi) mis-class rate:", round(mean(apply(pred_multi_bag, 1, which.max) != y_test), 4), "\n",
+    "       DNN (Ordinal) mis-class rate:", round(mean(apply(pred_ordi, 1, which.max) != y_test), 4), "\n",
+    "Bagged DNN (Ordinal) mis-class rate:", round(mean(apply(pred_ordi_bag, 1, which.max) != y_test), 4), "\n")
 
 #### Multi classification II (Ordinal)
 x <- matrix(runif(n*p), n, p)*2-1
@@ -171,59 +136,37 @@ y_test <- factor(apply(prob_test, 1, function(x) which.max(rmultinom(1, 1, x))))
 
 dnn_dat <- importDnnet(x, y)
 dnn_spl <- splitDnnet(dnn_dat, 0.8)
-dnn_mod_mult <- dnnet(dnn_spl$train, validate = dnn_spl$valid,
-                      n.hidden = c(30, 20, 10),
-                      l1.reg = 10**-4,
-                      n.batch = 50, n.epoch = 500, early.stop.det = 1000, plot = TRUE,
-                      accel = "rcpp", learning.rate.adaptive = "adam")
+args_dnnet <- appendArg(appendArg(esCtrl2, "train", dnn_spl$train, TRUE), "validate", dnn_spl$valid, TRUE)
+dnn_mod_mult <- do.call(dnnet, args_dnnet)
 pred_mult <- predict(dnn_mod_mult, x_test)
 # table(apply(pred_mult, 1, which.max), y_test)
-# sum(diag(table(apply(pred_mult, 1, which.max), y_test)))/sum(table(apply(pred_mult, 1, which.max), y_test))
 
-bag_mod_mult <- ensemble_dnnet(dnn_dat, 10,
-                               esCtrl = list(n.hidden = c(30, 20, 10),
-                                             l1.reg = 10**-4, n.batch = 50, n.epoch = 500, early.stop.det = 1000,
-                                             plot = TRUE,
-                                             accel = "rcpp", learning.rate.adaptive = "adam"))
+bag_mod_mult <- ensemble_dnnet(dnn_dat, n_ensemble, esCtrl = esCtrl2)
 pred_multi_bag <- predict(bag_mod_mult, x_test)
 # table(apply(pred_multi_bag, 1, which.max), y_test)
-# sum(diag(table(apply(pred_multi_bag, 1, which.max), y_test)))/sum(table(apply(pred_multi_bag, 1, which.max), y_test))
 
 #### ordinal
 dnn_dat <- importDnnet(x, factor(y, ordered = TRUE))
 dnn_spl <- splitDnnet(dnn_dat, dnn_spl$split)
-dnn_mod_ordi <- dnnet(dnn_spl$train, validate = dnn_spl$valid,
-                      n.hidden = c(30, 20, 10),
-                      l1.reg = 10**-4,
-                      n.batch = 50, n.epoch = 500, early.stop.det = 1000, plot = TRUE,
-                      accel = "rcpp", learning.rate.adaptive = "adam")
+args_dnnet <- appendArg(appendArg(esCtrl2, "train", dnn_spl$train, TRUE), "validate", dnn_spl$valid, TRUE)
+dnn_mod_ordi <- do.call(dnnet, args_dnnet)
 pred_ordi <- predict(dnn_mod_ordi, x_test)
 # table(apply(pred_ordi, 1, which.max), y_test)
-# sum(diag(table(apply(pred_ordi, 1, which.max), y_test)))/sum(table(apply(pred_ordi, 1, which.max), y_test))
 
-bag_mod_ordi <- ensemble_dnnet(dnn_dat, 10,
-                               esCtrl = list(n.hidden = c(30, 20, 10),
-                                             l1.reg = 10**-4, n.batch = 50, n.epoch = 500, early.stop.det = 1000,
-                                             plot = TRUE,
-                                             accel = "rcpp", learning.rate.adaptive = "adam"))
+bag_mod_ordi <- ensemble_dnnet(dnn_dat, n_ensemble, esCtrl = esCtrl2)
 pred_ordi_bag <- predict(bag_mod_ordi, x_test)
 # table(apply(pred_ordi_bag, 1, which.max), y_test)
-# sum(diag(table(apply(pred_ordi_bag, 1, which.max), y_test)))/sum(table(apply(pred_ordi_bag, 1, which.max), y_test))
 
 cat("------- Example V: Multi Classification II (Ordinal) ------- \n",
     "                True mis-class rate:", round(mean(apply(prob_test, 1, which.max) != y_test), 4), "|",
     "error:", round(mean(abs(apply(prob_test, 1, which.max) - as.numeric(y_test))), 4), "\n",
-    "         DNN (Multi) mis-class rate:", round(1-sum(diag(table(apply(pred_mult, 1, which.max), y_test)))/
-                                                    sum(table(apply(pred_mult, 1, which.max), y_test)), 4), "|",
+    "         DNN (Multi) mis-class rate:", round(mean(apply(pred_mult, 1, which.max) != y_test), 4), "|",
     "error:", round(mean(abs(apply(pred_mult, 1, which.max) - as.numeric(y_test))), 4), "\n",
-    "  Bagged DNN (Multi) mis-class rate:", round(1-sum(diag(table(apply(pred_multi_bag, 1, which.max), y_test)))/
-                                                    sum(table(apply(pred_multi_bag, 1, which.max), y_test)), 4), "|",
+    "  Bagged DNN (Multi) mis-class rate:", round(mean(apply(pred_multi_bag, 1, which.max) != y_test), 4), "|",
     "error:", round(mean(abs(apply(pred_multi_bag, 1, which.max) - as.numeric(y_test))), 4), "\n",
-    "       DNN (Ordinal) mis-class rate:", round(1-sum(diag(table(apply(pred_ordi, 1, which.max), y_test)))/
-                                                    sum(table(apply(pred_ordi, 1, which.max), y_test)), 4), "|",
+    "       DNN (Ordinal) mis-class rate:", round(mean(apply(pred_ordi, 1, which.max) != y_test), 4), "|",
     "error:", round(mean(abs(apply(pred_ordi, 1, which.max) - as.numeric(y_test))), 4), "\n",
-    "Bagged DNN (Ordinal) mis-class rate:", round(1-sum(diag(table(apply(pred_ordi_bag, 1, which.max), y_test)))/
-                                                    sum(table(apply(pred_ordi_bag, 1, which.max), y_test)), 4), "|",
+    "Bagged DNN (Ordinal) mis-class rate:", round(mean(apply(pred_ordi_bag, 1, which.max) != y_test), 4), "|",
     "error:", round(mean(abs(apply(pred_ordi_bag, 1, which.max) - as.numeric(y_test))), 4), "\n")
 
 
