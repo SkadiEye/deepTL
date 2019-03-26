@@ -8,7 +8,7 @@ ensemble_dnnet <- function(object,
 
   OOB.error <- list()
   model.list <- list()
-  model.type <- ifelse(class(object@y) == "factor", "Binary", "Continuous")
+  # model.type <- ifelse(class(object@y) == "factor", "Binary", "Continuous")
   pred.table <- matrix(NA, n.ensemble, length(object@y))
   loss <- numeric(length(n.ensemble))
   keep <- rep(TRUE, n.ensemble)
@@ -40,29 +40,58 @@ ensemble_dnnet <- function(object,
 
     model <- do.call(deepTL::dnnet, args)
     model.list[[i]] <- model
+    if(i == 1) model.type <- model@model.type
 
     pred <- predict(model, object@x, cutoff = cutoff)
-    if(model.type == "Continuous") {
+    if(model.type == "regression") {
 
       pred.table[i, ] <- pred
       loss[i] <- sum(((validObj@y - mean(validObj@y))**2 - (validObj@y - pred[-trainObj.ind])**2) *
                        validObj@w) / sum(validObj@w)
 
-    } else {
+    } else if(model.type == "binary-classification") {
 
       pred.table[i, ] <- pred[, levels(validObj@y)[1]]
       loss[i] <- sum((-log(mean(validObj@y == levels(validObj@y)[1])) * (validObj@y == levels(validObj@y)[1]) -
                         log(1-mean(validObj@y == levels(validObj@y)[1])) * (1-(validObj@y == levels(validObj@y)[1])) +
                         log(pred[-trainObj.ind, levels(validObj@y)[1]]) * (validObj@y == levels(validObj@y)[1]) +
                         log(1-pred[-trainObj.ind, levels(validObj@y)[1]]) * (1-(validObj@y == levels(validObj@y)[1]))) *
-                       validObj@w) / sum((validObj@w))
+                       validObj@w) / sum(validObj@w)
+    } else if(model.type == "multi-classification") {
+
+      if(i == 1) {
+
+        pred.table <- array(NA, dim = c(n.ensemble, dim(pred)))
+        mat_y <- matrix(NA, dim(pred)[1], dim(pred)[2])
+        for(d in 1:dim(pred)[2]) mat_y[, d] <- (object@y == levels(object@y)[d])*1
+      }
+      pred.table[i, , ] <- pred
+      loss[i] <- -sum((mat_y[-trainObj.ind, ] * log(pred[-trainObj.ind, ]) -
+                         mat_y[-trainObj.ind, ] * (rep(1, length(validObj@y)) %*% t(log(colMeans(mat_y[-trainObj.ind, ]))))) *
+                        validObj@w) / sum(validObj@w)
+    } else if(model.type == "ordinal-multi-classification") {
+
+      # browser()
+      for(d in (dim(pred)[2]-1):1) pred[, d] <- pred[, d] + pred[, d+1]
+      pred <- pred[, -1]
+      if(i == 1) {
+
+        pred.table <- array(NA, dim = c(n.ensemble, dim(pred)))
+        mat_y <- matrix(0, dim(pred)[1], dim(pred)[2] + 1)
+        for(d in 1:dim(pred)[1]) mat_y[d, 1:match(object@y[d], levels(object@y))] <- 1
+        mat_y <- mat_y[, -1]
+      }
+      pred.table[i, , ] <- pred
+      loss[i] <- -sum((mat_y[-trainObj.ind, ] * log(pred[-trainObj.ind, ]) +
+                         (1-mat_y[-trainObj.ind, ]) * log(1-pred[-trainObj.ind, ])) *
+                        validObj@w) / sum(validObj@w)
     }
 
     utils::setTxtProgressBar(pb, i)
   }
   close(pb)
 
-  if(best.opti && model.type == "Continuous") {
+  if(best.opti && model.type == "regression") {
 
     mse <- numeric(n.ensemble - 1)
     for(i in 1:length(mse))
@@ -70,7 +99,7 @@ ensemble_dnnet <- function(object,
                           object@w) / sum(object@w), Inf)
 
     keep <- loss >= sort(loss)[which.min(mse[1:(n.ensemble - min.keep + 1)])]
-  } else if(best.opti && model.type == "Binary") {
+  } else if(best.opti && model.type == "binary-classfication") {
 
     mse <- numeric(n.ensemble - 1)
     for(i in 1:length(mse))
@@ -79,6 +108,25 @@ ensemble_dnnet <- function(object,
                            object@w) / sum(object@w), Inf)
 
     keep <- loss >= sort(loss)[which.min(mse[1:(n.ensemble - min.keep + 1)])]
+  } else if(best.opti && model.type == "multi-classfication") {
+
+    mse <- numeric(n.ensemble - 1)
+    for(i in 1:length(mse))
+      mse[i] <- min(-sum(mat_y * log(apply(pred.table[loss >= sort(loss)[i], , ], 2:3, mean)) *
+                           object@w) / sum(object@w), Inf)
+
+    keep <- loss >= sort(loss)[which.min(mse[1:(n.ensemble - min.keep + 1)])]
+  } else if(best.opti && model.type == "ordinal-multi-classification") {
+
+    mse <- numeric(n.ensemble - 1)
+    for(i in 1:length(mse))
+      mse[i] <- min(-sum((mat_y * log(apply(pred.table[loss >= sort(loss)[i], , ], 2:3, mean)) +
+                            (1-mat_y) * log(1-apply(pred.table[loss >= sort(loss)[i], , ], 2:3, mean))) *
+                           object@w) / sum(object@w), Inf)
+
+    keep <- loss >= sort(loss)[which.min(mse[1:(n.ensemble - min.keep + 1)])]
+
+    # print(mse)
   }
 
   if(prop.keep[1] < 1)

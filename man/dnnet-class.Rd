@@ -30,6 +30,8 @@ An S4 class containing a deep neural network
 
 \item{\code{loss}}{The minimum loss acheived from the validate set}
 
+\item{\code{loss.traj}}{The loss trajectory}
+
 \item{\code{label}}{If the model is classification, a character vectors containing class labels}
 
 \item{\code{model.type}}{Either "Classification" or "Regression"}

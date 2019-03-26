@@ -9,6 +9,7 @@
 #' @param validate A \code{dnnetInput} object, the validation set, optional.
 #' @param norm.x A boolean variable indicating whether to normalize the input matrix.
 #' @param norm.y A boolean variable indicating whether to normalize the response (if continuous).
+#' @param n.hidden A numeric vector for numbers of nodes for all hidden layers.
 #' @param activate Activation Function. One of the following,
 #'  "sigmoid", "tanh", "relu", "prelu", "elu", "celu".
 #' @param learning.rate Initial learning rate, 0.001 by default; If "adam" is chosen as
@@ -46,14 +47,14 @@ dnnet <- function(train, validate = NULL,
                   l1.reg = 0, l2.reg = 0, n.batch = 100, n.epoch = 100,
                   early.stop = ifelse(is.null(validate), FALSE, TRUE), early.stop.det = 1000,
                   plot = FALSE, accel = c("rcpp", "none")[1],
-                  learning.rate.adaptive = c("constant", "adadelta", "adagrad", "momentum", "adam")[5],
+                  learning.rate.adaptive = c("constant", "adadelta", "adagrad", "momentum", "adam", "amsgrad")[5],
                   rho = c(0.9, 0.95, 0.99, 0.999)[ifelse(learning.rate.adaptive == "momentum", 1, 3)],
                   epsilon = c(10**-10, 10**-8, 10**-6, 10**-4)[2],
                   beta1 = 0.9, beta2 = 0.999, loss.f = ifelse(is.factor(train@y), "logit", "mse"), ...) {
 
   if(!class(train@x) %in% c("matrix", "data.frame"))
     stop("x has to be either a matrix or a data frame. ")
-  if(!class(train@y) %in% c("numeric", "factor", "vector", "integer"))
+  if(!class(train@y)[1] %in% c("numeric", "factor", "ordered", "vector", "integer"))
     stop("y has to be either a factor or a numeric vector. ")
   if(dim(train@x)[1] != length(train@y))
     stop("Dimensions of x and y do not match. ")
@@ -94,12 +95,52 @@ dnnet <- function(train, validate = NULL,
     if(is.factor(train@y)) {
 
       label <- levels(train@y)
-      train@y <- (train@y == label[1])*1
+      if(length(label) == 2) {
 
-      if(!is.null(validate))
-        validate@y <- (validate@y == label[1])*1
+        train@y <- (train@y == label[1])*1
+        if(!is.null(validate))
+          validate@y <- (validate@y == label[1])*1
 
-      model.type <- "classification"
+        model.type <- "binary-classification"
+      } else {
+
+        if(!is.ordered(train@y)) {
+
+          dim_y <- length(label)
+          mat_y <- matrix(0, sample.size, dim_y)
+          if(!is.null(validate))
+            mat_y_valid <- matrix(0, length(validate@y), dim_y)
+          for(d in 1:dim_y) {
+            mat_y[, d] <- (train@y == label[d])*1
+            if(!is.null(validate))
+              mat_y_valid[, d] <- (validate@y == label[d])*1
+          }
+          train@y <- mat_y
+          if(!is.null(validate))
+            validate@y <- mat_y_valid
+
+          model.type <- "multi-classification"
+          if(loss.f == "logit") loss.f <- "cross-entropy"
+        } else {
+
+          dim_y <- length(label)
+          mat_y <- matrix(0, sample.size, dim_y)
+          if(!is.null(validate))
+            mat_y_valid <- matrix(0, length(validate@y), dim_y)
+          for(d in 1:length(train@y))
+            mat_y[d, 1:match(train@y[d], label)] <- 1
+          for(d in 1:length(validate@y))
+            if(!is.null(validate))
+              mat_y_valid[d, 1:match(validate@y[d], label)] <- 1
+
+          train@y <- mat_y[, -1]
+          if(!is.null(validate))
+            validate@y <- mat_y_valid[, -1]
+
+          model.type <- "ordinal-multi-classification"
+          # if(loss.f == "logit") loss.f <- "cross-entropy"
+        }
+      }
     } else {
 
       train@y <- (train@y - norm$y.center)/norm$y.scale
@@ -124,13 +165,56 @@ dnnet <- function(train, validate = NULL,
 
     if(is.factor(train@y)) {
 
+
       label <- levels(train@y)
-      train@y <- (train@y == label[1])*1
+      if(length(label) == 2) {
 
-      if(!is.null(validate))
-        validate@y <- (validate@y == label[1])*1
+        train@y <- (train@y == label[1])*1
+        if(!is.null(validate))
+          validate@y <- (validate@y == label[1])*1
 
-      model.type <- "classification"
+        model.type <- "binary-classification"
+      } else {
+
+        if(!is.ordered(train@y)) {
+
+          dim_y <- length(label)
+          mat_y <- matrix(0, sample.size, dim_y)
+          if(!is.null(validate))
+            mat_y_valid <- matrix(0, length(validate@y), dim_y)
+          for(d in 1:dim_y) {
+            mat_y[, d] <- (train@y == label[d])*1
+            if(!is.null(validate))
+              mat_y_valid[, d] <- (validate@y == label[d])*1
+          }
+          train@y <- mat_y
+          if(!is.null(validate))
+            validate@y <- mat_y_valid
+
+          model.type <- "multi-classification"
+          if(loss.f == "logit") loss.f <- "cross-entropy"
+        } else {
+
+          dim_y <- length(label)
+          mat_y <- matrix(0, sample.size, dim_y)
+          if(!is.null(validate))
+            mat_y_valid <- matrix(0, length(validate@y), dim_y)
+          for(d in 1:length(train@y))
+            mat_y[d, 1:match(train@y[d], label)] <- 1
+          for(d in 1:length(validate@y))
+            if(!is.null(validate))
+              mat_y_valid[d, 1:match(validate@y[d], label)] <- 1
+
+          train@y <- mat_y[, -1]
+          if(!is.null(validate))
+            validate@y <- mat_y_valid[, -1]
+
+          model.type <- "ordinal-multi-classification"
+          # if(loss.f == "logit") loss.f <- "cross-entropy"
+
+          # print(head(mat_y))
+        }
+      }
     } else {
 
       if(norm.y) {
@@ -160,12 +244,14 @@ dnnet <- function(train, validate = NULL,
     weight.ini <- bias.ini <- list()
   }
 
+  # print(head(as.matrix(train@y)))
+
   if(accel == "rcpp") {
 
     if(!is.null(validate)) {
 
       try(result <- backprop(n.hidden, w.ini, load.param, weight.ini, bias.ini,
-                             train@x, train@y, train@w, TRUE, validate@x, validate@y, validate@w,
+                             train@x, as.matrix(train@y), train@w, TRUE, validate@x, as.matrix(validate@y), validate@w,
                              activate,
                              n.epoch, n.batch, model.type,
                              learning.rate, l1.reg, l2.reg, early.stop, early.stop.det,
@@ -173,7 +259,7 @@ dnnet <- function(train, validate = NULL,
     } else {
 
       try(result <- backprop(n.hidden, w.ini, load.param, weight.ini, bias.ini,
-                             train@x, train@y, train@w, FALSE, matrix(0), matrix(0), matrix(0),
+                             train@x, as.matrix(train@y), train@w, FALSE, matrix(0), matrix(0), matrix(0),
                              activate,
                              n.epoch, n.batch, model.type,
                              learning.rate, l1.reg, l2.reg, early.stop, early.stop.det,

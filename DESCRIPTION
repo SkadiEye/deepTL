@@ -12,4 +12,4 @@ LazyData: true
 Imports: Rcpp (>= 0.12.17)
 Depends: R (>= 3.0.0), methods
 LinkingTo: Rcpp, RcppArmadillo
-RoxygenNote: 6.1.0
+RoxygenNote: 6.1.1

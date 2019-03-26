@@ -35,8 +35,7 @@
 #' @return Returns the value after activation
 #'
 #' @seealso
-#' \code{\link{nn.regresser}}\cr
-#' \code{\link{nn.classifier}}\cr
+#' \code{\link{dnnet}}\cr
 NULL
 
 #' @rdname actF
