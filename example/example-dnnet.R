@@ -10,7 +10,8 @@ esCtrl1 <- list(n.hidden = c(30, 20, 10),
                 l1.reg = 10**-4, n.batch = 50, n.epoch = 100, early.stop.det = 1000,
                 plot = TRUE, accel = "rcpp", learning.rate.adaptive = "adam")
 esCtrl2 <- esCtrl1
-esCtrl2$n.epoch <- 500
+esCtrl2$n.epoch <- 1000
+esCtrl2$n.batch <- 25
 
 #### Example I: Regression
 x <- matrix(rnorm(n*p), n, p)
