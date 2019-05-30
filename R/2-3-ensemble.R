@@ -4,7 +4,8 @@ ensemble_dnnet <- function(object,
                            unbalance.trt = c("None", "Over", "Under", "Balance")[1],
                            prop.keep = 1,
                            best.opti = TRUE,
-                           min.keep = 10) {
+                           min.keep = 10,
+                           verbose = TRUE) {
 
   OOB.error <- list()
   model.list <- list()
@@ -14,7 +15,8 @@ ensemble_dnnet <- function(object,
   keep <- rep(TRUE, n.ensemble)
   min.keep <- max(min(min.keep, n.ensemble), 1)
 
-  pb <- utils::txtProgressBar(min = 0, max = n.ensemble, style = 3)
+  if(verbose)
+    pb <- utils::txtProgressBar(min = 0, max = n.ensemble, style = 3)
   for(i in 1:n.ensemble) {
 
     if(class(object) != "RegObj" && unbalance.trt != "None") {
@@ -41,6 +43,7 @@ ensemble_dnnet <- function(object,
     model <- do.call(deepTL::dnnet, args)
     model.list[[i]] <- model
     if(i == 1) model.type <- model@model.type
+    if(i == 1) model.spec <- model@model.spec
 
     pred <- predict(model, object@x, cutoff = cutoff)
     if(model.type == "regression") {
@@ -71,7 +74,6 @@ ensemble_dnnet <- function(object,
                         validObj@w) / sum(validObj@w)
     } else if(model.type == "ordinal-multi-classification") {
 
-      # browser()
       for(d in (dim(pred)[2]-1):1) pred[, d] <- pred[, d] + pred[, d+1]
       pred <- pred[, -1]
       if(i == 1) {
@@ -85,11 +87,29 @@ ensemble_dnnet <- function(object,
       loss[i] <- -sum((mat_y[-trainObj.ind, ] * log(pred[-trainObj.ind, ]) +
                          (1-mat_y[-trainObj.ind, ]) * log(1-pred[-trainObj.ind, ])) *
                         validObj@w) / sum(validObj@w)
+    } else if(model.type == "survival") {
+
+      pred.table[i, ] <- pred
+      y_order <- order(validObj@y)
+      h_y_order <- pred[-trainObj.ind][y_order]
+      e_y_order <- validObj@e[y_order]
+      curr <- sum(exp(h_y_order))
+      loss[i] <- 0
+      for(j in 1:length(validObj@y)) {
+
+        if(e_y_order[j] == 1)
+          loss[i] <- loss[i] - (h_y_order[j] - log(curr))
+        curr <- curr - exp(h_y_order[j])
+      }
+      if(sum(e_y_order) > 0)
+        loss[i] <- loss[i]/sum(e_y_order)
     }
 
-    utils::setTxtProgressBar(pb, i)
+    if(verbose)
+      utils::setTxtProgressBar(pb, i)
   }
-  close(pb)
+  if(verbose)
+    close(pb)
 
   if(best.opti && model.type == "regression") {
 
@@ -125,8 +145,28 @@ ensemble_dnnet <- function(object,
                            object@w) / sum(object@w), Inf)
 
     keep <- loss >= sort(loss)[which.min(mse[1:(n.ensemble - min.keep + 1)])]
+  } else if(best.opti && model.type == "survival") {
 
-    # print(mse)
+    mse <- numeric(n.ensemble - 1)
+    for(i in 1:length(mse)) {
+      pred <- colMeans(pred.table[loss >= sort(loss)[i], ])
+      y_order <- order(object@y)
+      h_y_order <- pred[y_order]
+      e_y_order <- object@e[y_order]
+      curr <- sum(exp(h_y_order))
+      mse[i] <- 0
+      for(j in 1:length(validObj@y)) {
+
+        if(e_y_order[j] == 1)
+          mse[i] <- mse[i] - (h_y_order[j] - log(curr))
+        curr <- curr - exp(h_y_order[j])
+      }
+      if(sum(e_y_order) > 0)
+        mse[i] <- mse[i]/sum(e_y_order)
+
+    }
+
+    keep <- loss >= sort(loss)[which.min(mse[1:(n.ensemble - min.keep + 1)])]
   }
 
   if(prop.keep[1] < 1)
@@ -138,6 +178,7 @@ ensemble_dnnet <- function(object,
   return(methods::new("dnnetEnsemble",
                       model.list = model.list,
                       model.type = model.type,
+                      model.spec = model.spec,
                       loss = loss,
                       keep = keep))
 }

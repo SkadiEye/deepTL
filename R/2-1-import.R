@@ -20,6 +20,26 @@ importDnnet <- function(x, y, w = rep(1, length(y))) {
   new("dnnetInput", x = as.matrix(x), y = y, w = w)
 }
 
+#' Import Data to create a \code{dnnetSurvInput} object.
+#'
+#' @param x A \code{matrix} containing all samples/variables. It has to be \code{numeric}
+#' and cannot be left blank. Any variable with missing value will be removed.
+#' @param y A \code{numeric} vector, indicating the censoring time.
+#' @param w A \code{numeric} vector, the sample weight. Will be 1 if left blank.
+#' @param e A \code{numeric} vector, the event status.
+#'
+#' @return An \code{dnnetInput} object.
+#'
+#' @importFrom methods new
+#'
+#' @seealso
+#' \code{\link{dnnetInput-class}}
+#' @export
+importDnnetSurv <- function(x, y, e, w = rep(1, length(y))) {
+
+  new("dnnetSurvInput", x = as.matrix(x), y = y, w = w, e = e)
+}
+
 importTrt <- function(x, y, z) {
 
   new("trtInput", x = as.matrix(x), y = y, z = z)
@@ -76,11 +96,15 @@ splitDnnet <-function(object, split) {
   train@x <- object@x[split, ]
   train@y <- object@y[split]
   train@w <- object@w[split]
+  if(class(object) == "dnnetSurvInput")
+    train@e <- object@e[split]
 
   valid <- object
   valid@x <- object@x[-split, ]
   valid@y <- object@y[-split]
   valid@w <- object@w[-split]
+  if(class(object) == "dnnetSurvInput")
+    valid@e <- object@e[-split]
 
   list(train = train, valid = valid, split = split)
 }

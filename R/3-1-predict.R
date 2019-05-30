@@ -22,6 +22,20 @@ setMethod("predict",
             one_sample_size <- rep(1, dim(newData)[1])
             newData <- (newData - outer(rep(1, dim(newData)[1]), object@norm$x.center)) /
               outer(rep(1, dim(newData)[1]), object@norm$x.scale)
+
+            if(object@model.spec$pathway) {
+
+              activate.p <- get(object@model.spec$pathway.active)
+              x_pathway <- list()
+              newData0 <- matrix(NA, dim(newData)[1], length(object@model.spec$pathway.list))
+              for(i in 1:length(object@model.spec$pathway.list)) {
+                x_pathway[[i]] <- newData[, object@model.spec$pathway.list[[i]]]
+                newData0[, i] <- activate.p(x_pathway[[i]] %*% object@model.spec$weight.pathway[[i]] +
+                                              object@model.spec$bias.pathway[i])
+              }
+              newData <- cbind(newData0, newData[, -unlist(object@model.spec$pathway.list)])
+            }
+
             for(j in 1:n.layer) {
 
               if(j == 1) {

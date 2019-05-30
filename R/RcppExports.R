@@ -5,6 +5,14 @@ backprop <- function(n_hidden, w_ini, load_param, weight, bias, x, y, w, valid, 
     .Call(`_deepTL_backprop`, n_hidden, w_ini, load_param, weight, bias, x, y, w, valid, x_valid, y_valid, w_valid, activ, n_epoch, n_batch, model_type, learning_rate, l1_reg, l2_reg, early_stop, early_stop_det, learning_rate_adaptive, rho, epsilon, beta1, beta2, loss_f)
 }
 
+backprop_long <- function(n_hidden, w_ini, weight_pathway, bias_pathway, l1_pathway, l2_pathway, load_param, weight, bias, x, y, w, x_pathway, valid, x_valid, y_valid, w_valid, x_valid_pathway, activ, activ_pathway, n_epoch, n_batch, model_type, learning_rate, l1_reg, l2_reg, early_stop, early_stop_det, learning_rate_adaptive, rho, epsilon, beta1, beta2, loss_f) {
+    .Call(`_deepTL_backprop_long`, n_hidden, w_ini, weight_pathway, bias_pathway, l1_pathway, l2_pathway, load_param, weight, bias, x, y, w, x_pathway, valid, x_valid, y_valid, w_valid, x_valid_pathway, activ, activ_pathway, n_epoch, n_batch, model_type, learning_rate, l1_reg, l2_reg, early_stop, early_stop_det, learning_rate_adaptive, rho, epsilon, beta1, beta2, loss_f)
+}
+
+backprop_surv <- function(n_hidden, w_ini, load_param, weight, bias, x, y, w, valid, x_valid, y_valid, w_valid, activ, n_epoch, n_batch, model_type, learning_rate, l1_reg, l2_reg, early_stop, early_stop_det, learning_rate_adaptive, rho, epsilon, beta1, beta2, loss_f) {
+    .Call(`_deepTL_backprop_surv`, n_hidden, w_ini, load_param, weight, bias, x, y, w, valid, x_valid, y_valid, w_valid, activ, n_epoch, n_batch, model_type, learning_rate, l1_reg, l2_reg, early_stop, early_stop_det, learning_rate_adaptive, rho, epsilon, beta1, beta2, loss_f)
+}
+
 backprop_BLOCK <- function(n_hidden, w_ini, load_param, weight, bias, x, y, w, valid, x_valid, y_valid, w_valid, activ, n_epoch, n_batch, model_type, learning_rate, l1_reg, l2_reg, early_stop, early_stop_det, learning_rate_adaptive, rho, epsilon, beta1, beta2, loss_f) {
     .Call(`_deepTL_backprop_BLOCK`, n_hidden, w_ini, load_param, weight, bias, x, y, w, valid, x_valid, y_valid, w_valid, activ, n_epoch, n_batch, model_type, learning_rate, l1_reg, l2_reg, early_stop, early_stop_det, learning_rate_adaptive, rho, epsilon, beta1, beta2, loss_f)
 }

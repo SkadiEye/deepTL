@@ -5,8 +5,8 @@
 #'
 #' Fit a Multilayer Perceptron Model for Regression or Classification
 #'
-#' @param train A \code{dnnetInput} object, the training set.
-#' @param validate A \code{dnnetInput} object, the validation set, optional.
+#' @param train A \code{dnnetInput} or a \code{dnnetSurvInput} object, the training set.
+#' @param validate A \code{dnnetInput} or a \code{dnnetSurvInput} object, the validation set, optional.
 #' @param norm.x A boolean variable indicating whether to normalize the input matrix.
 #' @param norm.y A boolean variable indicating whether to normalize the response (if continuous).
 #' @param n.hidden A numeric vector for numbers of nodes for all hidden layers.
@@ -28,6 +28,8 @@
 #' @param beta1 A parameter used in Adam.
 #' @param beta2 A parameter used in Adam.
 #' @param loss.f Loss function of choice.
+#' @param pathway If pathway.
+#' @param pathway.list Pathway list.
 #'
 #' @return Returns a \code{DnnModelObj} object.
 #'
@@ -41,7 +43,8 @@
 #' @export
 dnnet <- function(train, validate = NULL,
                   load.param = FALSE, initial.param = NULL,
-                  norm.x = TRUE, norm.y = ifelse(is.factor(train@y), FALSE, TRUE),
+                  norm.x = TRUE,
+                  norm.y = ifelse(is.factor(train@y) || (class(train) == "dnnetSurvInput"), FALSE, TRUE),
                   activate = "relu", n.hidden = c(10, 10),
                   learning.rate = ifelse(learning.rate.adaptive %in% c("adam"), 0.001, 0.01),
                   l1.reg = 0, l2.reg = 0, n.batch = 100, n.epoch = 100,
@@ -50,7 +53,8 @@ dnnet <- function(train, validate = NULL,
                   learning.rate.adaptive = c("constant", "adadelta", "adagrad", "momentum", "adam", "amsgrad")[5],
                   rho = c(0.9, 0.95, 0.99, 0.999)[ifelse(learning.rate.adaptive == "momentum", 1, 3)],
                   epsilon = c(10**-10, 10**-8, 10**-6, 10**-4)[2],
-                  beta1 = 0.9, beta2 = 0.999, loss.f = ifelse(is.factor(train@y), "logit", "mse"), ...) {
+                  beta1 = 0.9, beta2 = 0.999, loss.f = ifelse(is.factor(train@y), "logit", "mse"),
+                  pathway = FALSE, pathway.list = NULL, pathway.active = "identity", l1.pathway = 0, l2.pathway = 0, ...) {
 
   if(!class(train@x) %in% c("matrix", "data.frame"))
     stop("x has to be either a matrix or a data frame. ")
@@ -230,6 +234,9 @@ dnnet <- function(train, validate = NULL,
     }
   }
 
+  if(class(train) == "dnnetSurvInput")
+    model.type <- "survival"
+
   if(sum(is.na(train@x)) > 0 | sum(is.na(train@y)) > 0)
     stop("Please remove NA's in the input data first. ")
 
@@ -246,24 +253,97 @@ dnnet <- function(train, validate = NULL,
 
   # print(head(as.matrix(train@y)))
 
+  if(pathway) {
+
+    x_pathway <- list()
+    if(!is.null(validate))
+      x_valid_pathway <- list()
+    for(i in 1:length(pathway.list)) {
+      x_pathway[[i]] <- train@x[, pathway.list[[i]]]
+      if(!is.null(validate))
+        x_valid_pathway[[i]] <- validate@x[, pathway.list[[i]]]
+    }
+    x_input <- cbind(matrix(0, sample.size, length(pathway.list)), train@x[, -unlist(pathway.list)])
+    if(!is.null(validate))
+      x_valid_input <- cbind(matrix(0, dim(validate@x)[1], length(pathway.list)), validate@x[, -unlist(pathway.list)])
+
+    weight_pathway.ini <- list()
+    bias_pathway.ini <- 0
+    if(load.param) {
+
+      weight_pathway.ini <- initial.param@model.spec$weight.pathway
+      bias_pathway.ini <- initial.param@model.spec$bias.pathway
+    }
+  }
+
+  # browser()
   if(accel == "rcpp") {
 
-    if(!is.null(validate)) {
+    if(pathway) {
+      if(!is.null(validate)) {
 
-      try(result <- backprop(n.hidden, w.ini, load.param, weight.ini, bias.ini,
-                             train@x, as.matrix(train@y), train@w, TRUE, validate@x, as.matrix(validate@y), validate@w,
-                             activate,
-                             n.epoch, n.batch, model.type,
-                             learning.rate, l1.reg, l2.reg, early.stop, early.stop.det,
-                             learning.rate.adaptive, rho, epsilon, beta1, beta2, loss.f))
+        try(result <- backprop_long(n.hidden, w.ini,
+                                    weight_pathway.ini, bias_pathway.ini,
+                                    l1.pathway, l2.pathway,
+                                    load.param, weight.ini, bias.ini,
+                                    x_input, as.matrix(train@y), train@w, x_pathway, TRUE,
+                                    x_valid_input, as.matrix(validate@y), validate@w, x_valid_pathway,
+                                    activate, pathway.active,
+                                    n.epoch, n.batch, model.type,
+                                    learning.rate, l1.reg, l2.reg, early.stop, early.stop.det,
+                                    learning.rate.adaptive, rho, epsilon, beta1, beta2, loss.f))
+      } else {
+
+        try(result <- backprop_long(n.hidden, w.ini,
+                                    weight_pathway.ini, bias_pathway.ini,
+                                    l1.pathway, l2.pathway,
+                                    load.param, weight.ini, bias.ini,
+                                    x_input, as.matrix(train@y), train@w, x_pathway, FALSE,
+                                    matrix(0), matrix(0), matrix(0), list(),
+                                    activate, pathway.active,
+                                    n.epoch, n.batch, model.type,
+                                    learning.rate, l1.reg, l2.reg, early.stop, early.stop.det,
+                                    learning.rate.adaptive, rho, epsilon, beta1, beta2, loss.f))
+      }
+    } else if(class(train) == "dnnetSurvInput") {
+
+      if(!is.null(validate)) {
+
+        try(result <- backprop_surv(n.hidden, w.ini, load.param, weight.ini, bias.ini,
+                                    train@x, cbind(train@y, train@e), train@w, TRUE,
+                                    validate@x, cbind(validate@y, validate@e), validate@w,
+                                    activate,
+                                    n.epoch, n.batch, model.type,
+                                    learning.rate, l1.reg, l2.reg, early.stop, early.stop.det,
+                                    learning.rate.adaptive, rho, epsilon, beta1, beta2, loss.f))
+      } else {
+
+        try(result <- backprop_surv(n.hidden, w.ini, load.param, weight.ini, bias.ini,
+                                    train@x, cbind(train@y, train@e), train@w, FALSE, matrix(0), matrix(0), matrix(0),
+                                    activate,
+                                    n.epoch, n.batch, model.type,
+                                    learning.rate, l1.reg, l2.reg, early.stop, early.stop.det,
+                                    learning.rate.adaptive, rho, epsilon, beta1, beta2, loss.f))
+      }
     } else {
 
-      try(result <- backprop(n.hidden, w.ini, load.param, weight.ini, bias.ini,
-                             train@x, as.matrix(train@y), train@w, FALSE, matrix(0), matrix(0), matrix(0),
-                             activate,
-                             n.epoch, n.batch, model.type,
-                             learning.rate, l1.reg, l2.reg, early.stop, early.stop.det,
-                             learning.rate.adaptive, rho, epsilon, beta1, beta2, loss.f))
+      if(!is.null(validate)) {
+
+        try(result <- backprop(n.hidden, w.ini, load.param, weight.ini, bias.ini,
+                               train@x, as.matrix(train@y), train@w, TRUE, validate@x, as.matrix(validate@y), validate@w,
+                               activate,
+                               n.epoch, n.batch, model.type,
+                               learning.rate, l1.reg, l2.reg, early.stop, early.stop.det,
+                               learning.rate.adaptive, rho, epsilon, beta1, beta2, loss.f))
+      } else {
+
+        try(result <- backprop(n.hidden, w.ini, load.param, weight.ini, bias.ini,
+                               train@x, as.matrix(train@y), train@w, FALSE, matrix(0), matrix(0), matrix(0),
+                               activate,
+                               n.epoch, n.batch, model.type,
+                               learning.rate, l1.reg, l2.reg, early.stop, early.stop.det,
+                               learning.rate.adaptive, rho, epsilon, beta1, beta2, loss.f))
+      }
     }
   } else {
 
@@ -300,6 +380,12 @@ dnnet <- function(train, validate = NULL,
     }
   }
 
+  weight.pathway <- bias.pathway <- NULL
+  if(pathway) {
+    weight.pathway <- result[[5]]
+    bias.pathway <- result[[6]]
+  }
+
   if(exists("result")) {
 
     return(methods::new("dnnet", norm = norm,
@@ -307,7 +393,7 @@ dnnet <- function(train, validate = NULL,
                         bias = result[[2]],
                         loss = min.loss,
                         loss.traj = as.numeric(result[[3]]*norm$y.scale**2),
-                        label = ifelse(model.type == "regression", '', list(label))[[1]],
+                        label = ifelse(model.type %in% c("regression", "survival"), '', list(label))[[1]],
                         model.type = model.type,
                         model.spec = list(n.hidden = n.hidden,
                                           activate = activate,
@@ -315,7 +401,14 @@ dnnet <- function(train, validate = NULL,
                                           l1.reg = l1.reg,
                                           l2.reg = l2.reg,
                                           n.batch = n.batch,
-                                          n.epoch = n.epoch)))
+                                          n.epoch = n.epoch,
+                                          pathway = pathway,
+                                          pathway.list = pathway.list,
+                                          pathway.active = pathway.active,
+                                          l1.pathway = l1.pathway,
+                                          l2.pathway = l2.pathway,
+                                          weight.pathway = weight.pathway,
+                                          bias.pathway = bias.pathway)))
   } else {
 
     stop("Error fitting model. ")

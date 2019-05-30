@@ -43,6 +43,87 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// backprop_long
+SEXP backprop_long(NumericVector n_hidden, double w_ini, List weight_pathway, NumericVector bias_pathway, double l1_pathway, double l2_pathway, bool load_param, List weight, List bias, NumericMatrix x, NumericMatrix y, NumericVector w, List x_pathway, bool valid, NumericMatrix x_valid, NumericVector y_valid, NumericVector w_valid, List x_valid_pathway, std::string activ, std::string activ_pathway, int n_epoch, int n_batch, std::string model_type, double learning_rate, double l1_reg, double l2_reg, bool early_stop, int early_stop_det, std::string learning_rate_adaptive, double rho, double epsilon, double beta1, double beta2, std::string loss_f);
+RcppExport SEXP _deepTL_backprop_long(SEXP n_hiddenSEXP, SEXP w_iniSEXP, SEXP weight_pathwaySEXP, SEXP bias_pathwaySEXP, SEXP l1_pathwaySEXP, SEXP l2_pathwaySEXP, SEXP load_paramSEXP, SEXP weightSEXP, SEXP biasSEXP, SEXP xSEXP, SEXP ySEXP, SEXP wSEXP, SEXP x_pathwaySEXP, SEXP validSEXP, SEXP x_validSEXP, SEXP y_validSEXP, SEXP w_validSEXP, SEXP x_valid_pathwaySEXP, SEXP activSEXP, SEXP activ_pathwaySEXP, SEXP n_epochSEXP, SEXP n_batchSEXP, SEXP model_typeSEXP, SEXP learning_rateSEXP, SEXP l1_regSEXP, SEXP l2_regSEXP, SEXP early_stopSEXP, SEXP early_stop_detSEXP, SEXP learning_rate_adaptiveSEXP, SEXP rhoSEXP, SEXP epsilonSEXP, SEXP beta1SEXP, SEXP beta2SEXP, SEXP loss_fSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type n_hidden(n_hiddenSEXP);
+    Rcpp::traits::input_parameter< double >::type w_ini(w_iniSEXP);
+    Rcpp::traits::input_parameter< List >::type weight_pathway(weight_pathwaySEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type bias_pathway(bias_pathwaySEXP);
+    Rcpp::traits::input_parameter< double >::type l1_pathway(l1_pathwaySEXP);
+    Rcpp::traits::input_parameter< double >::type l2_pathway(l2_pathwaySEXP);
+    Rcpp::traits::input_parameter< bool >::type load_param(load_paramSEXP);
+    Rcpp::traits::input_parameter< List >::type weight(weightSEXP);
+    Rcpp::traits::input_parameter< List >::type bias(biasSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type x(xSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type y(ySEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type w(wSEXP);
+    Rcpp::traits::input_parameter< List >::type x_pathway(x_pathwaySEXP);
+    Rcpp::traits::input_parameter< bool >::type valid(validSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type x_valid(x_validSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type y_valid(y_validSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type w_valid(w_validSEXP);
+    Rcpp::traits::input_parameter< List >::type x_valid_pathway(x_valid_pathwaySEXP);
+    Rcpp::traits::input_parameter< std::string >::type activ(activSEXP);
+    Rcpp::traits::input_parameter< std::string >::type activ_pathway(activ_pathwaySEXP);
+    Rcpp::traits::input_parameter< int >::type n_epoch(n_epochSEXP);
+    Rcpp::traits::input_parameter< int >::type n_batch(n_batchSEXP);
+    Rcpp::traits::input_parameter< std::string >::type model_type(model_typeSEXP);
+    Rcpp::traits::input_parameter< double >::type learning_rate(learning_rateSEXP);
+    Rcpp::traits::input_parameter< double >::type l1_reg(l1_regSEXP);
+    Rcpp::traits::input_parameter< double >::type l2_reg(l2_regSEXP);
+    Rcpp::traits::input_parameter< bool >::type early_stop(early_stopSEXP);
+    Rcpp::traits::input_parameter< int >::type early_stop_det(early_stop_detSEXP);
+    Rcpp::traits::input_parameter< std::string >::type learning_rate_adaptive(learning_rate_adaptiveSEXP);
+    Rcpp::traits::input_parameter< double >::type rho(rhoSEXP);
+    Rcpp::traits::input_parameter< double >::type epsilon(epsilonSEXP);
+    Rcpp::traits::input_parameter< double >::type beta1(beta1SEXP);
+    Rcpp::traits::input_parameter< double >::type beta2(beta2SEXP);
+    Rcpp::traits::input_parameter< std::string >::type loss_f(loss_fSEXP);
+    rcpp_result_gen = Rcpp::wrap(backprop_long(n_hidden, w_ini, weight_pathway, bias_pathway, l1_pathway, l2_pathway, load_param, weight, bias, x, y, w, x_pathway, valid, x_valid, y_valid, w_valid, x_valid_pathway, activ, activ_pathway, n_epoch, n_batch, model_type, learning_rate, l1_reg, l2_reg, early_stop, early_stop_det, learning_rate_adaptive, rho, epsilon, beta1, beta2, loss_f));
+    return rcpp_result_gen;
+END_RCPP
+}
+// backprop_surv
+SEXP backprop_surv(NumericVector n_hidden, double w_ini, bool load_param, List weight, List bias, NumericMatrix x, NumericMatrix y, NumericVector w, bool valid, NumericMatrix x_valid, NumericVector y_valid, NumericVector w_valid, std::string activ, int n_epoch, int n_batch, std::string model_type, double learning_rate, double l1_reg, double l2_reg, bool early_stop, int early_stop_det, std::string learning_rate_adaptive, double rho, double epsilon, double beta1, double beta2, std::string loss_f);
+RcppExport SEXP _deepTL_backprop_surv(SEXP n_hiddenSEXP, SEXP w_iniSEXP, SEXP load_paramSEXP, SEXP weightSEXP, SEXP biasSEXP, SEXP xSEXP, SEXP ySEXP, SEXP wSEXP, SEXP validSEXP, SEXP x_validSEXP, SEXP y_validSEXP, SEXP w_validSEXP, SEXP activSEXP, SEXP n_epochSEXP, SEXP n_batchSEXP, SEXP model_typeSEXP, SEXP learning_rateSEXP, SEXP l1_regSEXP, SEXP l2_regSEXP, SEXP early_stopSEXP, SEXP early_stop_detSEXP, SEXP learning_rate_adaptiveSEXP, SEXP rhoSEXP, SEXP epsilonSEXP, SEXP beta1SEXP, SEXP beta2SEXP, SEXP loss_fSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type n_hidden(n_hiddenSEXP);
+    Rcpp::traits::input_parameter< double >::type w_ini(w_iniSEXP);
+    Rcpp::traits::input_parameter< bool >::type load_param(load_paramSEXP);
+    Rcpp::traits::input_parameter< List >::type weight(weightSEXP);
+    Rcpp::traits::input_parameter< List >::type bias(biasSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type x(xSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type y(ySEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type w(wSEXP);
+    Rcpp::traits::input_parameter< bool >::type valid(validSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type x_valid(x_validSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type y_valid(y_validSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type w_valid(w_validSEXP);
+    Rcpp::traits::input_parameter< std::string >::type activ(activSEXP);
+    Rcpp::traits::input_parameter< int >::type n_epoch(n_epochSEXP);
+    Rcpp::traits::input_parameter< int >::type n_batch(n_batchSEXP);
+    Rcpp::traits::input_parameter< std::string >::type model_type(model_typeSEXP);
+    Rcpp::traits::input_parameter< double >::type learning_rate(learning_rateSEXP);
+    Rcpp::traits::input_parameter< double >::type l1_reg(l1_regSEXP);
+    Rcpp::traits::input_parameter< double >::type l2_reg(l2_regSEXP);
+    Rcpp::traits::input_parameter< bool >::type early_stop(early_stopSEXP);
+    Rcpp::traits::input_parameter< int >::type early_stop_det(early_stop_detSEXP);
+    Rcpp::traits::input_parameter< std::string >::type learning_rate_adaptive(learning_rate_adaptiveSEXP);
+    Rcpp::traits::input_parameter< double >::type rho(rhoSEXP);
+    Rcpp::traits::input_parameter< double >::type epsilon(epsilonSEXP);
+    Rcpp::traits::input_parameter< double >::type beta1(beta1SEXP);
+    Rcpp::traits::input_parameter< double >::type beta2(beta2SEXP);
+    Rcpp::traits::input_parameter< std::string >::type loss_f(loss_fSEXP);
+    rcpp_result_gen = Rcpp::wrap(backprop_surv(n_hidden, w_ini, load_param, weight, bias, x, y, w, valid, x_valid, y_valid, w_valid, activ, n_epoch, n_batch, model_type, learning_rate, l1_reg, l2_reg, early_stop, early_stop_det, learning_rate_adaptive, rho, epsilon, beta1, beta2, loss_f));
+    return rcpp_result_gen;
+END_RCPP
+}
 // backprop_BLOCK
 SEXP backprop_BLOCK(List n_hidden, double w_ini, bool load_param, List weight, List bias, NumericMatrix x, NumericVector y, NumericVector w, bool valid, NumericMatrix x_valid, NumericVector y_valid, NumericVector w_valid, std::string activ, int n_epoch, int n_batch, std::string model_type, double learning_rate, double l1_reg, double l2_reg, bool early_stop, int early_stop_det, std::string learning_rate_adaptive, double rho, double epsilon, double beta1, double beta2, std::string loss_f);
 RcppExport SEXP _deepTL_backprop_BLOCK(SEXP n_hiddenSEXP, SEXP w_iniSEXP, SEXP load_paramSEXP, SEXP weightSEXP, SEXP biasSEXP, SEXP xSEXP, SEXP ySEXP, SEXP wSEXP, SEXP validSEXP, SEXP x_validSEXP, SEXP y_validSEXP, SEXP w_validSEXP, SEXP activSEXP, SEXP n_epochSEXP, SEXP n_batchSEXP, SEXP model_typeSEXP, SEXP learning_rateSEXP, SEXP l1_regSEXP, SEXP l2_regSEXP, SEXP early_stopSEXP, SEXP early_stop_detSEXP, SEXP learning_rate_adaptiveSEXP, SEXP rhoSEXP, SEXP epsilonSEXP, SEXP beta1SEXP, SEXP beta2SEXP, SEXP loss_fSEXP) {
@@ -126,6 +207,8 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_deepTL_backprop", (DL_FUNC) &_deepTL_backprop, 27},
+    {"_deepTL_backprop_long", (DL_FUNC) &_deepTL_backprop_long, 34},
+    {"_deepTL_backprop_surv", (DL_FUNC) &_deepTL_backprop_surv, 27},
     {"_deepTL_backprop_BLOCK", (DL_FUNC) &_deepTL_backprop_BLOCK, 27},
     {"_deepTL_rcpparma_hello_world", (DL_FUNC) &_deepTL_rcpparma_hello_world, 0},
     {"_deepTL_rcpparma_outerproduct", (DL_FUNC) &_deepTL_rcpparma_outerproduct, 1},

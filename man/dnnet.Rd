@@ -13,11 +13,12 @@ dnnet(train, validate = NULL, load.param = FALSE,
   early.stop = ifelse(is.null(validate), FALSE, TRUE),
   early.stop.det = 1000, plot = FALSE, accel = c("rcpp", "none")[1],
   learning.rate.adaptive = c("constant", "adadelta", "adagrad",
-  "momentum", "adam")[5], rho = c(0.9, 0.95, 0.99,
+  "momentum", "adam", "amsgrad")[5], rho = c(0.9, 0.95, 0.99,
   0.999)[ifelse(learning.rate.adaptive == "momentum", 1, 3)],
   epsilon = c(10^-10, 10^-8, 10^-6, 10^-4)[2], beta1 = 0.9,
   beta2 = 0.999, loss.f = ifelse(is.factor(train@y), "logit", "mse"),
-  ...)
+  pathway = FALSE, pathway.list = NULL, pathway.active = "identity",
+  l1.pathway = 0, l2.pathway = 0, ...)
 }
 \arguments{
 \item{train}{A \code{dnnetInput} object, the training set.}
@@ -62,6 +63,10 @@ an adaptive learning rate adjustment method, 0.1 by defalut.}
 \item{beta2}{A parameter used in Adam.}
 
 \item{loss.f}{Loss function of choice.}
+
+\item{pathway}{If pathway.}
+
+\item{pathway.list}{Pathway list.}
 }
 \value{
 Returns a \code{DnnModelObj} object.

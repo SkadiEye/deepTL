@@ -17,6 +17,27 @@ setClass("dnnetInput",
          ))
 
 #################################
+#### dnnetSurvInput class
+#' An S4 class containing predictors (x), censoring time (y),
+#' sample weights (w) and event status (e)
+#'
+#' @slot x A numeric matrix, the predictors
+#' @slot y A numeric vector, censoring time
+#' @slot w A numeric vector, sample weights
+#' @slot e A numeric vector, event status
+#'
+#' @seealso
+#' \code{\link{dnnet-class}}\cr
+#' @export
+setClass("dnnetSurvInput",
+         slots = list(
+           x = "matrix",
+           y = "numeric",
+           w = "numeric",
+           e = "numeric"
+         ))
+
+#################################
 #### dnnet class
 #' An S4 class containing a deep neural network
 #'
@@ -55,6 +76,7 @@ setClass("dnnetEnsemble",
          slots = list(
            model.list = "list",
            model.type = "character",
+           model.spec = "list",
            loss = "numeric",
            keep = "ANY"
          ))

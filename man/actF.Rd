@@ -114,6 +114,5 @@ First order derivative of CELU function.
 }
 
 \seealso{
-\code{\link{nn.regresser}}\cr
-\code{\link{nn.classifier}}\cr
+\code{\link{dnnet}}\cr
 }
