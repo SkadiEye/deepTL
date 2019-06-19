@@ -1,11 +1,13 @@
 Package: deepTL
 Type: Package
-Title: Deep Tree Learning
+Title: Deep Treatment Learning
 Version: 0.1.2
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
+Author: Xinlei Mi
+Maintainer: Xinlei Mi <xm2231@cumc.columbia.edu>
+Description: A deep learning-based R package for treatment learning
+    1. Personalized medicine
+    2. Comparative effectiveness analysis
+    3. More being included
 License: GPL (>= 2)
 Encoding: UTF-8
 LazyData: true

@@ -810,7 +810,7 @@ SEXP backprop(NumericVector n_hidden, double w_ini, // List weight, List bias,
           bias_es(j)   = bias_es(j)   * rho + (1-rho) * square(db(j));
         } else if (learning_rate_adaptive == "adam") {
 
-          adam_ind ++; // **** NEED FIX **** //
+          // adam_ind ++; // **** NEED FIX **** //
           mt_w(j) = mt_w(j) * beta1 + (1-beta1) * d_w(j);
           mt_b(j) = mt_b(j) * beta1 + (1-beta1) * bias_grad;
           vt_w(j) = vt_w(j) * beta2 + (1-beta2) * square(d_w(j));
