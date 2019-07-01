@@ -6,11 +6,11 @@
 \usage{
 dnnet(train, validate = NULL, load.param = FALSE,
   initial.param = NULL, norm.x = TRUE,
-  norm.y = ifelse(is.factor(train@y), FALSE, TRUE), activate = "relu",
-  n.hidden = c(10, 10), learning.rate = ifelse(learning.rate.adaptive
-  \%in\% c("adam"), 0.001, 0.01), l1.reg = 0, l2.reg = 0,
-  n.batch = 100, n.epoch = 100,
-  early.stop = ifelse(is.null(validate), FALSE, TRUE),
+  norm.y = ifelse(is.factor(train@y) || (class(train) ==
+  "dnnetSurvInput"), FALSE, TRUE), activate = "relu", n.hidden = c(10,
+  10), learning.rate = ifelse(learning.rate.adaptive \%in\% c("adam"),
+  0.001, 0.01), l1.reg = 0, l2.reg = 0, n.batch = 100,
+  n.epoch = 100, early.stop = ifelse(is.null(validate), FALSE, TRUE),
   early.stop.det = 1000, plot = FALSE, accel = c("rcpp", "none")[1],
   learning.rate.adaptive = c("constant", "adadelta", "adagrad",
   "momentum", "adam", "amsgrad")[5], rho = c(0.9, 0.95, 0.99,
@@ -21,9 +21,9 @@ dnnet(train, validate = NULL, load.param = FALSE,
   l1.pathway = 0, l2.pathway = 0, ...)
 }
 \arguments{
-\item{train}{A \code{dnnetInput} object, the training set.}
+\item{train}{A \code{dnnetInput} or a \code{dnnetSurvInput} object, the training set.}
 
-\item{validate}{A \code{dnnetInput} object, the validation set, optional.}
+\item{validate}{A \code{dnnetInput} or a \code{dnnetSurvInput} object, the validation set, optional.}
 
 \item{norm.x}{A boolean variable indicating whether to normalize the input matrix.}
 

@@ -4,7 +4,7 @@
 \alias{importDnnetSurv}
 \title{Import Data to create a \code{dnnetSurvInput} object.}
 \usage{
-importDnnetSurv(x, y, w = rep(1, length(y)), e)
+importDnnetSurv(x, y, e, w = rep(1, length(y)))
 }
 \arguments{
 \item{x}{A \code{matrix} containing all samples/variables. It has to be \code{numeric}
@@ -12,9 +12,9 @@ and cannot be left blank. Any variable with missing value will be removed.}
 
 \item{y}{A \code{numeric} vector, indicating the censoring time.}
 
-\item{w}{A \code{numeric} vector, the sample weight. Will be 1 if left blank.}
-
 \item{e}{A \code{numeric} vector, the event status.}
+
+\item{w}{A \code{numeric} vector, the sample weight. Will be 1 if left blank.}
 }
 \value{
 An \code{dnnetInput} object.
