@@ -16,13 +16,16 @@ dnnet_block(train, validate = NULL, load.param = FALSE,
   "momentum", "adam")[5], rho = c(0.9, 0.95, 0.99,
   0.999)[ifelse(learning.rate.adaptive == "momentum", 1, 3)],
   epsilon = c(10^-10, 10^-8, 10^-6, 10^-4)[2], beta1 = 0.9,
-  beta2 = 0.999, loss.f = ifelse(is.factor(train@y), "logit", "mse"),
-  ...)
+  beta2 = 0.999, loss.f = ifelse(is.factor(train@y), "logit", "mse"))
 }
 \arguments{
 \item{train}{A \code{dnnetInput} object, the training set.}
 
 \item{validate}{A \code{dnnetInput} object, the validation set, optional.}
+
+\item{load.param}{Whether initial parameters are loaded into the model.}
+
+\item{initial.param}{The initial parameters to be loaded.}
 
 \item{norm.x}{A boolean variable indicating whether to normalize the input matrix.}
 
@@ -55,6 +58,8 @@ an adaptive learning rate adjustment method, 0.1 by defalut.}
 
 \item{learning.rate.adaptive}{Adaptive learning rate adjustment methods, one of the following,
 "constant", "adadelta", "adagrad", "momentum", "adam".}
+
+\item{rho}{A parameter used in momentum.}
 
 \item{epsilon}{A parameter used in Adagrad and Adam.}
 

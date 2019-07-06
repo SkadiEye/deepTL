@@ -44,10 +44,6 @@ celu_(x, a = 1)
 \item{x}{Input of the activation function}
 
 \item{a}{a or alpha in the function}
-
-\item{alpha}{A pre-specified numeric value less or equal to 1.}
-
-\item{alpha}{A pre-specified numeric value less or equal to 1.}
 }
 \value{
 Returns the value after activation

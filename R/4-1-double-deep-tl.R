@@ -1,3 +1,18 @@
+###########################################################
+### Double deep treatment learning
+
+#' The algorithm for double deep treatment learning
+#'
+#' The algorithm for double deep treatment learning in comparative effectiveness analysis.
+#'
+#' @param object A \code{dnnetInput} or a \code{dnnetSurvInput} object, the training set.
+#' @param en_dnn_ctrl1 A list of parameters to be passed to \code{dnnet} for model 1.
+#' @param en_dnn_ctrl2 A list of parameters to be passed to \code{dnnet} for model 2.
+#' @param methods Methods included in this analysis.
+#'
+#' @return Returns a \code{list} of results.
+#'
+#' @export
 double_deepTL <- function(object,
                           en_dnn_ctrl1 = NULL,
                           en_dnn_ctrl2 = NULL,

@@ -94,7 +94,6 @@ prelu_ <- function(x, a = 0.2) {
 }
 
 #' @rdname actF
-#' @param alpha A pre-specified numeric value less or equal to 1.
 #' @section Methods (by generic):
 #' ELU.
 #' @export
@@ -107,7 +106,6 @@ elu <- function(x, a = 1) {(x > 0)*x + a*(exp((x <= 0)*x) - 1)}
 elu_ <- function(x, a = 1) {(x > 0) + a*(exp((x <= 0)*x) - (x <= 0))}
 
 #' @rdname actF
-#' @param alpha A pre-specified numeric value less or equal to 1.
 #' @section Methods (by generic):
 #' CELU.
 #' @export

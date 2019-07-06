@@ -1,3 +1,26 @@
+###########################################################
+### DNN ensemble
+
+#' An ensemble model of DNNs
+#'
+#' Fit a an ensemble model of DNNs
+#'
+#' @param object A \code{dnnetInput} or a \code{dnnetSurvInput} object, the training set.
+#' @param n.ensemble The number of DNNs to be fit
+#' @param esCtrl A list of parameters to be passed to \code{dnnet}.
+#' @param unbalance.trt Treatment for unbalanced labels.
+#' @param prop.keep The proportion of DNNs to be kept in the ensemble.
+#' @param best.opti Whether to run the algorithm to keep the optimal number of DNNs.
+#' @param min.keep Minimal number of DNNs to be kept.
+#' @param verbose Whether the progress to be printed.
+#'
+#' @return Returns a \code{dnnetEnsemble} object.
+#'
+#' @seealso
+#' \code{\link{dnnetEnsemble-class}}\cr
+#' \code{\link{dnnetInput-class}}\cr
+#'
+#' @export
 ensemble_dnnet <- function(object,
                            n.ensemble = 100,
                            esCtrl,

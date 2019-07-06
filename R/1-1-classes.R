@@ -65,6 +65,15 @@ setClass("dnnet",
            model.spec = "list"
          ))
 
+#################################
+#### trtInput class
+#' An S4 class containing predictors (x), response (y) and treatment assignment (z)
+#'
+#' @slot x A numeric matrix, the predictors
+#' @slot y A factor or numeric vector, either the class labels or continuous responses
+#' @slot z Treatment assignment
+#'
+#' @export
 setClass("trtInput",
          slots = list(
            x = "matrix",
@@ -72,6 +81,19 @@ setClass("trtInput",
            z = "ANY"
          ))
 
+#################################
+#### dnnetEnsemble class
+#' An S4 class containing an ensemble of deep neural networks
+#'
+#' @slot model.list A list of dnnet models
+#' @slot model.type Either "Classification" or "Regression"
+#' @slot model.spec Other possible information
+#' @slot loss A numeric vector of loss from all DNNs
+#' @slot keep Whether the model is kept when put in the predict function
+#'
+#' @seealso
+#' \code{\link{dnnet-class}}\cr
+#' @export
 setClass("dnnetEnsemble",
          slots = list(
            model.list = "list",

@@ -25,10 +25,13 @@
 #' @param accel "rcpp" to use the Rcpp version and "none" (default) to use the R version for back propagation.
 #' @param learning.rate.adaptive Adaptive learning rate adjustment methods, one of the following,
 #'  "constant", "adadelta", "adagrad", "momentum", "adam".
+#' @param rho A parameter used in momentum.
 #' @param epsilon A parameter used in Adagrad and Adam.
 #' @param beta1 A parameter used in Adam.
 #' @param beta2 A parameter used in Adam.
 #' @param loss.f Loss function of choice.
+#' @param load.param Whether initial parameters are loaded into the model.
+#' @param initial.param The initial parameters to be loaded.
 #'
 #' @return Returns a \code{DnnModelObj} object.
 #'
@@ -51,7 +54,7 @@ dnnet_block <- function(train, validate = NULL,
                         learning.rate.adaptive = c("constant", "adadelta", "adagrad", "momentum", "adam")[5],
                         rho = c(0.9, 0.95, 0.99, 0.999)[ifelse(learning.rate.adaptive == "momentum", 1, 3)],
                         epsilon = c(10**-10, 10**-8, 10**-6, 10**-4)[2],
-                        beta1 = 0.9, beta2 = 0.999, loss.f = ifelse(is.factor(train@y), "logit", "mse"), ...) {
+                        beta1 = 0.9, beta2 = 0.999, loss.f = ifelse(is.factor(train@y), "logit", "mse")) {
 
   if(!class(train@x) %in% c("matrix", "data.frame"))
     stop("x has to be either a matrix or a data frame. ")

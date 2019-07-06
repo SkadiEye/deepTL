@@ -1,17 +1,27 @@
 ###########################################################
 ### Predict using dnnet objects
 
-#' @describeIn Predict new observations using \code{dnnet} object.
+#' @name predict
+#' @rdname predict
 #'
-#' @param object A \code{dnnet} object.
+#' @title Predict function for the package
+#'
+#' @description The prediction function for \code{dnnet} or \code{dnnetEnsemble} object.
+#'
+#' @param object A \code{dnnet} or \code{dnnetEnsemble} object.
 #' @param newData A matrix with the same number of columns in the input data.
 #' @param type Consistent with model.type in the \code{object}.
+#' @param ... Other parameters.
 #'
 #' @return A numeric vector for regression or a matrix of probabilities for each class for classification.
 #'
 #' @seealso
 #' \code{\link{dnnet-class}}\cr
+#' \code{\link{dnnetEnsemble-class}}\cr
 #'
+NULL
+
+#' @rdname predict
 #' @export
 setMethod("predict",
           "dnnet",
@@ -73,6 +83,11 @@ setMethod("predict",
             return(pred*object@norm$y.scale + object@norm$y.center)
           })
 
+###########################################################
+### Predict using dnnetEnsemble objects
+
+#' @rdname predict
+#' @export
 setMethod("predict",
           "dnnetEnsemble",
           function(object, newData, type, ...) {

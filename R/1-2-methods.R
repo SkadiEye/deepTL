@@ -4,9 +4,23 @@
 #################################
 #### dnnetInput class
 
-#' @describeIn dnnetInput Method to show \code{dnnetInput} object.
+#' @name show
+#' @rdname show
 #'
-#' @param object A \code{dnnetInput} object.
+#' @title Method show for the package
+#'
+#' @description The method show for \code{dnnetInput} or \code{dnnet} object.
+#'
+#' @param object A \code{dnnet} or \code{dnnetInput} object.
+#'
+#' @seealso
+#' \code{\link{dnnetInput-class}}\cr
+#' \code{\link{dnnet-class}}\cr
+#'
+NULL
+
+#' @rdname show
+#' @importFrom methods show
 #'
 #' @export
 setMethod("show",
@@ -25,9 +39,8 @@ setMethod("show",
 #################################
 #### dnnet class
 
-#' @describeIn dnnet Method to show \code{dnnet} object.
-#'
-#' @param object A \code{dnnet} object.
+#' @rdname show
+#' @importFrom methods show
 #'
 #' @export
 setMethod("show",

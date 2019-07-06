@@ -17,19 +17,3 @@ backprop_BLOCK <- function(n_hidden, w_ini, load_param, weight, bias, x, y, w, v
     .Call(`_deepTL_backprop_BLOCK`, n_hidden, w_ini, load_param, weight, bias, x, y, w, valid, x_valid, y_valid, w_valid, activ, n_epoch, n_batch, model_type, learning_rate, l1_reg, l2_reg, early_stop, early_stop_det, learning_rate_adaptive, rho, epsilon, beta1, beta2, loss_f)
 }
 
-rcpparma_hello_world <- function() {
-    .Call(`_deepTL_rcpparma_hello_world`)
-}
-
-rcpparma_outerproduct <- function(x) {
-    .Call(`_deepTL_rcpparma_outerproduct`, x)
-}
-
-rcpparma_innerproduct <- function(x) {
-    .Call(`_deepTL_rcpparma_innerproduct`, x)
-}
-
-rcpparma_bothproducts <- function(x) {
-    .Call(`_deepTL_rcpparma_bothproducts`, x)
-}
-

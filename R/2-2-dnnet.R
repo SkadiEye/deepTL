@@ -24,12 +24,18 @@
 #' @param accel "rcpp" to use the Rcpp version and "none" (default) to use the R version for back propagation.
 #' @param learning.rate.adaptive Adaptive learning rate adjustment methods, one of the following,
 #'  "constant", "adadelta", "adagrad", "momentum", "adam".
+#' @param rho A parameter used in momentum.
 #' @param epsilon A parameter used in Adagrad and Adam.
 #' @param beta1 A parameter used in Adam.
 #' @param beta2 A parameter used in Adam.
 #' @param loss.f Loss function of choice.
 #' @param pathway If pathway.
 #' @param pathway.list Pathway list.
+#' @param pathway.active Activation function for the pathway layer.
+#' @param l1.pathway The weight for l1-panelty for the pathway layer.
+#' @param l2.pathway The weight for l2-panelty for the pathway layer.
+#' @param load.param Whether initial parameters are loaded into the model.
+#' @param initial.param The initial parameters to be loaded.
 #'
 #' @return Returns a \code{DnnModelObj} object.
 #'
@@ -54,7 +60,7 @@ dnnet <- function(train, validate = NULL,
                   rho = c(0.9, 0.95, 0.99, 0.999)[ifelse(learning.rate.adaptive == "momentum", 1, 3)],
                   epsilon = c(10**-10, 10**-8, 10**-6, 10**-4)[2],
                   beta1 = 0.9, beta2 = 0.999, loss.f = ifelse(is.factor(train@y), "logit", "mse"),
-                  pathway = FALSE, pathway.list = NULL, pathway.active = "identity", l1.pathway = 0, l2.pathway = 0, ...) {
+                  pathway = FALSE, pathway.list = NULL, pathway.active = "identity", l1.pathway = 0, l2.pathway = 0) {
 
   if(!class(train@x) %in% c("matrix", "data.frame"))
     stop("x has to be either a matrix or a data frame. ")
@@ -416,7 +422,38 @@ dnnet <- function(train, validate = NULL,
 }
 
 #' Back Propagation
-NULL
+#'
+#' @param n.hidden A numeric vector for numbers of nodes for all hidden layers.
+#' @param w.ini Initial weight parameter.
+#' @param load.param Whether initial parameters are loaded into the model.
+#' @param initial.param The initial parameters to be loaded.
+#' @param x x
+#' @param y y
+#' @param w w
+#' @param valid If exists the validation set
+#' @param x.valid x-valid
+#' @param y.valid y-valid
+#' @param w.valid w-valid
+#' @param activate Activation Function.
+#' @param activate_ The forst derivative of the activation function.
+#' @param n.batch Batch size for batch gradient descent.
+#' @param n.epoch Maximum number of epochs.
+#' @param model.type Type of model.
+#' @param learning.rate Initial learning rate, 0.001 by default; If "adam" is chosen as
+#'  an adaptive learning rate adjustment method, 0.1 by defalut.
+#' @param l1.reg weight for l1 regularization, optional.
+#' @param l2.reg weight for l2 regularization, optional.
+#' @param early.stop Indicate whether early stop is used (only if there exists a validation set).
+#' @param early.stop.det Number of epochs of increasing loss to determine the early stop.
+#' @param learning.rate.adaptive Adaptive learning rate adjustment methods, one of the following,
+#'  "constant", "adadelta", "adagrad", "momentum", "adam".
+#' @param rho A parameter used in momentum.
+#' @param epsilon A parameter used in Adagrad and Adam.
+#' @param beta1 A parameter used in Adam.
+#' @param beta2 A parameter used in Adam.
+#' @param loss.f Loss function of choice.
+#'
+#' @return Returns a \code{list} of results to \code{dnnet}.
 dnnet.backprop.r <- function(n.hidden, w.ini, load.param, initial.param,
                              x, y, w, valid, x.valid, y.valid, w.valid,
                              activate, activate_, n.epoch, n.batch, model.type,

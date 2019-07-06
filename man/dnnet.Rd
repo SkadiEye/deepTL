@@ -18,12 +18,16 @@ dnnet(train, validate = NULL, load.param = FALSE,
   epsilon = c(10^-10, 10^-8, 10^-6, 10^-4)[2], beta1 = 0.9,
   beta2 = 0.999, loss.f = ifelse(is.factor(train@y), "logit", "mse"),
   pathway = FALSE, pathway.list = NULL, pathway.active = "identity",
-  l1.pathway = 0, l2.pathway = 0, ...)
+  l1.pathway = 0, l2.pathway = 0)
 }
 \arguments{
 \item{train}{A \code{dnnetInput} or a \code{dnnetSurvInput} object, the training set.}
 
 \item{validate}{A \code{dnnetInput} or a \code{dnnetSurvInput} object, the validation set, optional.}
+
+\item{load.param}{Whether initial parameters are loaded into the model.}
+
+\item{initial.param}{The initial parameters to be loaded.}
 
 \item{norm.x}{A boolean variable indicating whether to normalize the input matrix.}
 
@@ -56,6 +60,8 @@ an adaptive learning rate adjustment method, 0.1 by defalut.}
 \item{learning.rate.adaptive}{Adaptive learning rate adjustment methods, one of the following,
 "constant", "adadelta", "adagrad", "momentum", "adam".}
 
+\item{rho}{A parameter used in momentum.}
+
 \item{epsilon}{A parameter used in Adagrad and Adam.}
 
 \item{beta1}{A parameter used in Adam.}
@@ -67,6 +73,12 @@ an adaptive learning rate adjustment method, 0.1 by defalut.}
 \item{pathway}{If pathway.}
 
 \item{pathway.list}{Pathway list.}
+
+\item{pathway.active}{Activation function for the pathway layer.}
+
+\item{l1.pathway}{The weight for l1-panelty for the pathway layer.}
+
+\item{l2.pathway}{The weight for l2-panelty for the pathway layer.}
 }
 \value{
 Returns a \code{DnnModelObj} object.
