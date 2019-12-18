@@ -107,14 +107,14 @@ splitDnnet <-function(object, split) {
   split <- getSplitDnnet(split, dim(object@x)[1])
 
   train <- object
-  train@x <- object@x[split, ]
+  train@x <- as.matrix(object@x[split, ])
   train@y <- object@y[split]
   train@w <- object@w[split]
   if(class(object) == "dnnetSurvInput")
     train@e <- object@e[split]
 
   valid <- object
-  valid@x <- object@x[-split, ]
+  valid@x <- as.matrix(object@x[-split, ])
   valid@y <- object@y[-split]
   valid@w <- object@w[-split]
   if(class(object) == "dnnetSurvInput")
@@ -146,12 +146,12 @@ splitTrt <-function(object, split) {
   split <- getSplitDnnet(split, dim(object@x)[1])
 
   train <- object
-  train@x <- object@x[split, ]
+  train@x <- as.matrix(object@x[split, ])
   train@y <- object@y[split]
   train@w <- object@z[split]
 
   valid <- object
-  valid@x <- object@x[-split, ]
+  valid@x <- as.matrix(object@x[-split, ])
   valid@y <- object@y[-split]
   valid@w <- object@z[-split]
 
