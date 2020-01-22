@@ -79,6 +79,13 @@ setMethod("predict",
                             dimnames = list(NULL, object@label)))
             }
 
+            if(object@model.type == "multi-regression") {
+              pred <- pred %*% object@weight[[n.layer + 1]] + one_sample_size %*% object@bias[[n.layer + 1]]
+              sample.size <- dim(pred)[1]
+              return(pred*(rep(1, sample.size) %*% t(object@norm$y.scale)) +
+                       rep(1, sample.size) %*% t(object@norm$y.center))
+            }
+
             pred <- (pred %*% object@weight[[n.layer + 1]] + one_sample_size %*% object@bias[[n.layer + 1]])[, 1]
             return(pred*object@norm$y.scale + object@norm$y.center)
           })
@@ -92,7 +99,8 @@ setMethod("predict",
           "dnnetEnsemble",
           function(object, newData, type, ...) {
 
-            if(object@model.type %in% c("multi-classification", "ordinal-multi-classification")) {
+            if(object@model.type %in% c("multi-classification", "ordinal-multi-classification",
+                                        "multi-regression")) {
               count <- 0
               for(i in 1:length(object@keep)) {
 

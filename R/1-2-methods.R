@@ -28,12 +28,15 @@ setMethod("show",
           function(object) {
 
             print("y: (first 6)")
-            print(object@y[1:6])
+            if(class(object@y) == "matrix")
+              print(object@y[1:min(6, dim(object@x)[1]), ])
+            else
+              print(object@y[1:min(6, dim(object@x)[1])])
             print("x: (first 6x6)")
-            print(paste("dim(x) =", dim(x)[1], "x", dim(x)[2]))
-            print(object@x[1:6, 1:6])
+            print(paste("dim(x) =", dim(object@x)[1], "x", dim(object@x)[2]))
+            print(object@x[1:min(6, dim(object@x)[1]), 1:min(6, dim(object@x)[2])])
             print("w: (first 6)")
-            print(object@w[1:6])
+            print(object@w[1:min(6, dim(object@x)[1])])
           })
 
 #################################

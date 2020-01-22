@@ -64,10 +64,15 @@ dnnet <- function(train, validate = NULL,
 
   if(!class(train@x) %in% c("matrix", "data.frame"))
     stop("x has to be either a matrix or a data frame. ")
-  if(!class(train@y)[1] %in% c("numeric", "factor", "ordered", "vector", "integer"))
-    stop("y has to be either a factor or a numeric vector. ")
-  if(dim(train@x)[1] != length(train@y))
-    stop("Dimensions of x and y do not match. ")
+  if(!class(train@y)[1] %in% c("numeric", "factor", "ordered", "vector", "integer", "matrix"))
+    stop("y has to be either a factor, a numeric vector, or a matrix. ")
+  if(class(train@y)[1] != "matrix") {
+    if(dim(train@x)[1] != length(train@y))
+      stop("Dimensions of x and y do not match. ")
+  } else {
+    if(dim(train@x)[1] != dim(train@y)[1])
+      stop("Dimensions of x and y do not match. ")
+  }
 
   if(is.null(validate))
     validate <- train
@@ -77,13 +82,19 @@ dnnet <- function(train, validate = NULL,
   rho
   loss.f
 
-  sample.size <- length(train@y)
+  sample.size <- dim(train@x)[1]
+  if(!is.null(validate))
+    valid.size <- dim(validate@x)[1]
   n.variable <- dim(train@x)[2]
+  if(class(train@y)[1] != "matrix")
+    n.outcome <- 1
+  else
+    n.outcome <- dim(train@y)[2]
 
   if(!is.null(train@w)) {
 
-    if(length(train@w) != length(train@y))
-      stop("Dimensions of y and w do not match. ")
+    if(length(train@w) != sample.size)
+      stop("Dimensions of x and w do not match. ")
     if(!class(train@w) %in% c("integer", "numeric"))
       stop("w has to be a numeric vector. ")
     if(sum(train@w < 0) > 0)
@@ -97,10 +108,11 @@ dnnet <- function(train, validate = NULL,
   if(load.param) {
 
     norm <- initial.param@norm
-    train@x <- (train@x - outer(rep(1, dim(train@x)[1]), norm$x.center)) /
-      outer(rep(1, dim(train@x)[1]), norm$x.scale)
-    validate@x <- (validate@x - outer(rep(1, length(validate@y)), norm$x.center)) /
-      outer(rep(1, length(validate@y)), norm$x.scale)
+    train@x <- (train@x - outer(rep(1, sample.size), norm$x.center)) /
+      outer(rep(1, sample.size), norm$x.scale)
+    if(!is.null(validate))
+      validate@x <- (validate@x - outer(rep(1, valid.size), norm$x.center)) /
+      outer(rep(1, valid.size), norm$x.scale)
 
     if(is.factor(train@y)) {
 
@@ -137,9 +149,9 @@ dnnet <- function(train, validate = NULL,
           mat_y <- matrix(0, sample.size, dim_y)
           if(!is.null(validate))
             mat_y_valid <- matrix(0, length(validate@y), dim_y)
-          for(d in 1:length(train@y))
+          for(d in 1:sample.size)
             mat_y[d, 1:match(train@y[d], label)] <- 1
-          for(d in 1:length(validate@y))
+          for(d in 1:valid.size)
             if(!is.null(validate))
               mat_y_valid[d, 1:match(validate@y[d], label)] <- 1
 
@@ -151,17 +163,27 @@ dnnet <- function(train, validate = NULL,
           # if(loss.f == "logit") loss.f <- "cross-entropy"
         }
       }
-    } else {
+    } else if(class(train@y)[1] != "matrix") {
 
       train@y <- (train@y - norm$y.center)/norm$y.scale
-      validate@y <- (validate@y - norm$y.center)/norm$y.scale
+      if(!is.null(validate))
+        validate@y <- (validate@y - norm$y.center)/norm$y.scale
       model.type <- "regression"
+    } else {
+
+      train@y <- (train@y - rep(1, sample.size) %*% t(norm$y.center))/
+        (rep(1, sample.size) %*% t(norm$y.scale))
+      if(!is.null(validate))
+        validate@y <- (validate@y - rep(1, sample.size) %*% t(norm$y.center))/
+          (rep(1, sample.size) %*% t(norm$y.scale))
+      model.type <- "multi-regression"
     }
   } else {
 
     norm <- list(x.center = rep(0, n.variable),
                  x.scale = rep(1, n.variable),
-                 y.center = 0, y.scale = 1)
+                 y.center = rep(0, n.outcome),
+                 y.scale = rep(1, n.outcome))
     if(norm.x && (sum(apply(train@x, 2, sd) == 0) == 0)) {
 
       train@x <- scale(train@x)
@@ -169,8 +191,8 @@ dnnet <- function(train, validate = NULL,
       norm$x.scale <- attr(train@x, "scaled:scale")
 
       if(!is.null(validate))
-        validate@x <- (validate@x - outer(rep(1, length(validate@y)), norm$x.center)) /
-        outer(rep(1, length(validate@y)), norm$x.scale)
+        validate@x <- (validate@x - outer(rep(1, valid.size), norm$x.center))/
+        outer(rep(1, valid.size), norm$x.scale)
     }
 
     if(is.factor(train@y)) {
@@ -220,9 +242,6 @@ dnnet <- function(train, validate = NULL,
             validate@y <- mat_y_valid[, -1]
 
           model.type <- "ordinal-multi-classification"
-          # if(loss.f == "logit") loss.f <- "cross-entropy"
-
-          # print(head(mat_y))
         }
       }
     } else {
@@ -234,9 +253,17 @@ dnnet <- function(train, validate = NULL,
         norm$y.scale <- attr(train@y, "scaled:scale")
 
         if(!is.null(validate))
-          validate@y <- (validate@y - norm$y.center)/norm$y.scale
+          if(class(train@y)[1] != "matrix")
+            validate@y <- (validate@y - norm$y.center)/norm$y.scale
+        if(!is.null(validate))
+          if(class(train@y)[1] == "matrix")
+            validate@y <- (validate@y - rep(1, valid.size) %*% t(norm$y.center))/
+          (rep(1, valid.size) %*% t(norm$y.scale))
       }
-      model.type <- "regression"
+      if(class(train@y)[1] != "matrix")
+        model.type <- "regression"
+      else
+        model.type <- "multi-regression"
     }
   }
 
@@ -371,7 +398,8 @@ dnnet <- function(train, validate = NULL,
     }
   }
 
-  if(!is.null(validate) & plot) try(plot(result[[3]][0:result[[4]]+1]*norm$y.scale**2, ylab = "loss"))
+  if(!is.null(validate) & plot)
+    try(plot(result[[3]][0:result[[4]]+1]*mean(norm$y.scale**2), ylab = "loss"))
   if(is.na(result[[3]][1]) | is.nan(result[[3]][1])) {
 
     min.loss <- Inf
@@ -379,10 +407,10 @@ dnnet <- function(train, validate = NULL,
 
     if(early.stop) {
 
-      min.loss <- min(result[[3]][0:result[[4]]+1])*norm$y.scale**2
+      min.loss <- min(result[[3]][0:result[[4]]+1])*mean(norm$y.scale**2)
     } else {
 
-      min.loss <- result[[3]][length(result[[3]])]*norm$y.scale**2
+      min.loss <- result[[3]][length(result[[3]])]*mean(norm$y.scale**2)
     }
   }
 
@@ -398,8 +426,9 @@ dnnet <- function(train, validate = NULL,
                         weight = result[[1]],
                         bias = result[[2]],
                         loss = min.loss,
-                        loss.traj = as.numeric(result[[3]]*norm$y.scale**2),
-                        label = ifelse(model.type %in% c("regression", "survival"), '', list(label))[[1]],
+                        loss.traj = as.numeric(result[[3]]*mean(norm$y.scale**2)),
+                        label = ifelse(model.type %in% c("multi-regression", "regression", "survival"),
+                                       '', list(label))[[1]],
                         model.type = model.type,
                         model.spec = list(n.hidden = n.hidden,
                                           activate = activate,

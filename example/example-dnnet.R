@@ -170,5 +170,52 @@ cat("------- Example V: Multi Classification II (Ordinal) ------- \n",
     "Bagged DNN (Ordinal) mis-class rate:", round(mean(apply(pred_ordi_bag, 1, which.max) != y_test), 4), "|",
     "error:", round(mean(abs(apply(pred_ordi_bag, 1, which.max) - as.numeric(y_test))), 4), "\n")
 
+#### Multi-regression ####
+n <- 500
+p <- 10
+n_test <- 10000
+
+esCtrl1 <- list(n.hidden = c(50, 40, 30),
+                l1.reg = 10**-4, n.batch = 50, n.epoch = 200, early.stop.det = 1000,
+                plot = TRUE, accel = "rcpp", learning.rate.adaptive = "adam")
+
+x <- matrix(rnorm(n*p), n, p)
+y <- cbind(2*x[, 1]**2 + x[, 2]**2 + x[, 3]**2 + rnorm(n),
+           x[, 1]**2 + 2*x[, 2]**2 + x[, 3]**2 + rnorm(n),
+           x[, 1]**2 + x[, 2]**2 + 2*x[, 3]**2 + rnorm(n))
+
+x_test <- matrix(rnorm(n_test*p), n_test, p)
+y_test <- cbind(2*x_test[, 1]**2 + x_test[, 2]**2 + x_test[, 3]**2 + rnorm(n_test),
+                x_test[, 1]**2 + 2*x_test[, 2]**2 + x_test[, 3]**2 + rnorm(n_test),
+                x_test[, 1]**2 + x_test[, 2]**2 + 3*x_test[, 3]**2 + rnorm(n_test))
+
+dnn_dat <- importDnnet(x, y)
+dnn_spl <- splitDnnet(dnn_dat, 0.8)
+args_dnnet <- appendArg(appendArg(esCtrl1, "train", dnn_spl$train, TRUE), "validate", dnn_spl$valid, TRUE)
+# args_dnnet <- appendArg(esCtrl1, "train", dnn_spl$train, TRUE)
+dnn_mod_cont <- do.call(dnnet, args_dnnet)
+pred_cont <- predict(dnn_mod_cont, x_test)
+
+bag_mod_cont <- ensemble_dnnet(dnn_dat, n_ensemble, esCtrl = esCtrl1)
+pred_cont_bag <- predict(bag_mod_cont, x_test)
+
+esCtrl1$n.epoch <- 200
+sep_mod1 <- ensemble_dnnet(importDnnet(x, y[, 1]), n_ensemble, esCtrl = esCtrl1)
+sep_mod2 <- ensemble_dnnet(importDnnet(x, y[, 2]), n_ensemble, esCtrl = esCtrl1)
+sep_mod3 <- ensemble_dnnet(importDnnet(x, y[, 3]), n_ensemble, esCtrl = esCtrl1)
+pred_sep1 <- predict(sep_mod1, x_test)
+pred_sep2 <- predict(sep_mod2, x_test)
+pred_sep3 <- predict(sep_mod3, x_test)
+
+cat("------- Example VI:  multi-Regression ------- \n",
+    "         True MSE:", round(mean((y_test -
+                                         cbind(2*x_test[, 1]**2 + x_test[, 2]**2 + x_test[, 3]**2,
+                                               x_test[, 1]**2 + 2*x_test[, 2]**2 + x_test[, 3]**2,
+                                               x_test[, 1]**2 + x_test[, 2]**2 + 3*x_test[, 3]**2))**2), 4), "\n",
+    "          DNN MSE:", round(mean((pred_cont - y_test)**2), 4), "\n",
+    "   Bagged DNN MSE:", round(mean((pred_cont_bag - y_test)**2), 4), "\n",
+    " Separate DNN MSE:", round(mean((cbind(pred_sep1, pred_sep2, pred_sep3) - y_test)**2), 4), "\n")
+
+
 
 

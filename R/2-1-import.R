@@ -15,7 +15,7 @@
 #' @seealso
 #' \code{\link{dnnetInput-class}}
 #' @export
-importDnnet <- function(x, y, w = rep(1, length(y))) {
+importDnnet <- function(x, y, w = rep(1, dim(x)[1])) {
 
   new("dnnetInput", x = as.matrix(x), y = y, w = w)
 }
@@ -35,7 +35,7 @@ importDnnet <- function(x, y, w = rep(1, length(y))) {
 #' @seealso
 #' \code{\link{dnnetInput-class}}
 #' @export
-importDnnetSurv <- function(x, y, e, w = rep(1, length(y))) {
+importDnnetSurv <- function(x, y, e, w = rep(1, dim(x)[1])) {
 
   new("dnnetSurvInput", x = as.matrix(x), y = y, w = w, e = e)
 }
@@ -108,14 +108,22 @@ splitDnnet <-function(object, split) {
 
   train <- object
   train@x <- as.matrix(object@x[split, ])
-  train@y <- object@y[split]
+  if(class(object@y)[1] != "matrix") {
+    train@y <- object@y[split]
+  } else {
+    train@y <- object@y[split, ]
+  }
   train@w <- object@w[split]
   if(class(object) == "dnnetSurvInput")
     train@e <- object@e[split]
 
   valid <- object
   valid@x <- as.matrix(object@x[-split, ])
-  valid@y <- object@y[-split]
+  if(class(object@y)[1] != "matrix") {
+    valid@y <- object@y[-split]
+  } else {
+    valid@y <- object@y[-split, ]
+  }
   valid@w <- object@w[-split]
   if(class(object) == "dnnetSurvInput")
     valid@e <- object@e[-split]
