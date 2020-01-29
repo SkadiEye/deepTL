@@ -27,6 +27,7 @@ dnn_mod_cont <- do.call(dnnet, args_dnnet)
 pred_cont <- predict(dnn_mod_cont, x_test)
 
 bag_mod_cont <- ensemble_dnnet(dnn_dat, n_ensemble, esCtrl = esCtrl1)
+# bag_mod_cont <- ensemble_dnnet(dnn_dat, n_ensemble, esCtrl = esCtrl1, bootstrap = FALSE, prop.train = 0.8)
 pred_cont_bag <- predict(bag_mod_cont, x_test)
 
 cat("------- Example I: Regression ------- \n",

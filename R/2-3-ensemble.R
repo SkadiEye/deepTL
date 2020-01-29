@@ -9,6 +9,8 @@
 #' @param n.ensemble The number of DNNs to be fit
 #' @param esCtrl A list of parameters to be passed to \code{dnnet}.
 #' @param unbalance.trt Treatment for unbalanced labels.
+#' @param bootstrap Indicator for whether a bootstrap sampling is used.
+#' @param prop.train If bootstrap == FALSE, a training/validation cut for the data will be used (0, 1).
 #' @param prop.keep The proportion of DNNs to be kept in the ensemble.
 #' @param best.opti Whether to run the algorithm to keep the optimal number of DNNs.
 #' @param min.keep Minimal number of DNNs to be kept.
@@ -25,6 +27,8 @@ ensemble_dnnet <- function(object,
                            n.ensemble = 100,
                            esCtrl,
                            unbalance.trt = c("None", "Over", "Under", "Balance")[1],
+                           bootstrap = TRUE,
+                           prop.train = 1,
                            prop.keep = 1,
                            best.opti = TRUE,
                            min.keep = 10,
@@ -53,8 +57,13 @@ ensemble_dnnet <- function(object,
         train.ind2 <- c(train.ind2, sample(which(object@y == names(y.table)[k]), class.size, replace = TRUE))
 
       train.boot <- splitDnnet(object, train.ind2)
-    } else
+    } else if (bootstrap) {
+
       train.boot <- splitDnnet(object, "bootstrap")
+    } else {
+
+      train.boot <- splitDnnet(object, prop.train)
+    }
 
     trainObj <- train.boot$train
     validObj <- train.boot$valid
