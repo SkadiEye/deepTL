@@ -4,19 +4,31 @@
 \alias{dnnet_block}
 \title{Blocked Feedforward Deep Neural Nets}
 \usage{
-dnnet_block(train, validate = NULL, load.param = FALSE,
-  initial.param = NULL, norm.x = TRUE,
-  norm.y = ifelse(is.factor(train@y), FALSE, TRUE), activate = "relu",
+dnnet_block(
+  train,
+  validate = NULL,
+  load.param = FALSE,
+  initial.param = NULL,
+  norm.x = TRUE,
+  norm.y = ifelse(is.factor(train@y), FALSE, TRUE),
+  activate = "relu",
   n.hidden = list(dim(train@x)[2], 10, 10),
-  learning.rate = ifelse(learning.rate.adaptive \%in\% c("adam"), 0.001,
-  0.01), l1.reg = 0, l2.reg = 0, n.batch = 100, n.epoch = 100,
+  learning.rate = ifelse(learning.rate.adaptive \%in\% c("adam"), 0.001, 0.01),
+  l1.reg = 0,
+  l2.reg = 0,
+  n.batch = 100,
+  n.epoch = 100,
   early.stop = ifelse(is.null(validate), FALSE, TRUE),
-  early.stop.det = 1000, plot = FALSE, accel = c("rcpp", "none")[1],
-  learning.rate.adaptive = c("constant", "adadelta", "adagrad",
-  "momentum", "adam")[5], rho = c(0.9, 0.95, 0.99,
-  0.999)[ifelse(learning.rate.adaptive == "momentum", 1, 3)],
-  epsilon = c(10^-10, 10^-8, 10^-6, 10^-4)[2], beta1 = 0.9,
-  beta2 = 0.999, loss.f = ifelse(is.factor(train@y), "logit", "mse"))
+  early.stop.det = 1000,
+  plot = FALSE,
+  accel = c("rcpp", "none")[1],
+  learning.rate.adaptive = c("constant", "adadelta", "adagrad", "momentum", "adam")[5],
+  rho = c(0.9, 0.95, 0.99, 0.999)[ifelse(learning.rate.adaptive == "momentum", 1, 3)],
+  epsilon = c(10^-10, 10^-8, 10^-6, 10^-4)[2],
+  beta1 = 0.9,
+  beta2 = 0.999,
+  loss.f = ifelse(is.factor(train@y), "logit", "mse")
+)
 }
 \arguments{
 \item{train}{A \code{dnnetInput} object, the training set.}

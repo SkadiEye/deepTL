@@ -7,6 +7,7 @@
 #'
 #' @param train A \code{dnnetInput} or a \code{dnnetSurvInput} object, the training set.
 #' @param validate A \code{dnnetInput} or a \code{dnnetSurvInput} object, the validation set, optional.
+#' @param family If it's specified as Poisson, a poisson model with log link will be fitted.
 #' @param norm.x A boolean variable indicating whether to normalize the input matrix.
 #' @param norm.y A boolean variable indicating whether to normalize the response (if continuous).
 #' @param n.hidden A numeric vector for numbers of nodes for all hidden layers.
@@ -49,8 +50,10 @@
 #' @export
 dnnet <- function(train, validate = NULL,
                   load.param = FALSE, initial.param = NULL,
+                  family = c("gaussin", "binomial", "multinomial", "poisson", "coxph")[1],
                   norm.x = TRUE,
-                  norm.y = ifelse(is.factor(train@y) || (class(train) == "dnnetSurvInput"), FALSE, TRUE),
+                  norm.y = ifelse(is.factor(train@y) || (class(train) == "dnnetSurvInput") ||
+                                    (family == "poisson"), FALSE, TRUE),
                   activate = "relu", n.hidden = c(10, 10),
                   learning.rate = ifelse(learning.rate.adaptive %in% c("adam"), 0.001, 0.01),
                   l1.reg = 0, l2.reg = 0, n.batch = 100, n.epoch = 100,
@@ -270,6 +273,11 @@ dnnet <- function(train, validate = NULL,
   if(class(train) == "dnnetSurvInput")
     model.type <- "survival"
 
+  if(family == "poisson") {
+    model.type <- "poisson"
+    loss.f <- "log-link"
+  }
+
   if(sum(is.na(train@x)) > 0 | sum(is.na(train@y)) > 0)
     stop("Please remove NA's in the input data first. ")
 
@@ -427,7 +435,7 @@ dnnet <- function(train, validate = NULL,
                         bias = result[[2]],
                         loss = min.loss,
                         loss.traj = as.numeric(result[[3]]*mean(norm$y.scale**2)),
-                        label = ifelse(model.type %in% c("multi-regression", "regression", "survival"),
+                        label = ifelse(model.type %in% c("multi-regression", "regression", "survival", "poisson"),
                                        '', list(label))[[1]],
                         model.type = model.type,
                         model.spec = list(n.hidden = n.hidden,

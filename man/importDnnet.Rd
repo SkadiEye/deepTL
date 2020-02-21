@@ -4,7 +4,7 @@
 \alias{importDnnet}
 \title{Import Data to create a \code{dnnetInput} object.}
 \usage{
-importDnnet(x, y, w = rep(1, length(y)))
+importDnnet(x, y, w = rep(1, dim(x)[1]))
 }
 \arguments{
 \item{x}{A \code{matrix} containing all samples/variables. It has to be \code{numeric}

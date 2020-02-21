@@ -708,6 +708,9 @@ SEXP backprop(NumericVector n_hidden, double w_ini, // List weight, List bias,
 
         y_pi = exp(y_pi) / (sum(exp(y_pi), 1) * one_dim_y.t());
         d_a(n_layer) = -(yi_ - y_pi) % (wi_ * one_dim_y.t()) / sum(wi_);
+      } else if(loss_f == "log-link") {
+
+        d_a(n_layer) = -(yi_ - exp(y_pi)) % (wi_ * one_dim_y.t()) / sum(wi_);
       } else {
 
         // d_a(n_layer) = -(yi_ - y_pi) % wi_ / sum(wi_);
@@ -879,6 +882,9 @@ SEXP backprop(NumericVector n_hidden, double w_ini, // List weight, List bias,
 
         y_pred = y_pred % (y_pred > 0);
         loss[k] = sum(w_valid_ % pow(log(y_valid_ + 1) - log(y_pred + 1), 2)) / sum(w_valid_);
+      } else if(loss_f == "log-link") {
+
+        loss[k] = sum(w_valid_ % sum(-y_valid_ % y_pred + exp(y_pred), 1)) / sum(w_valid_);
       }
 
       if(!is_finite(loss[k])) {

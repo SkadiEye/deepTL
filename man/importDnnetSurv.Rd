@@ -4,7 +4,7 @@
 \alias{importDnnetSurv}
 \title{Import Data to create a \code{dnnetSurvInput} object.}
 \usage{
-importDnnetSurv(x, y, e, w = rep(1, length(y)))
+importDnnetSurv(x, y, e, w = rep(1, dim(x)[1]))
 }
 \arguments{
 \item{x}{A \code{matrix} containing all samples/variables. It has to be \code{numeric}

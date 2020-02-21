@@ -4,21 +4,39 @@
 \alias{dnnet}
 \title{Multilayer Perceptron Model for Regression or Classification}
 \usage{
-dnnet(train, validate = NULL, load.param = FALSE,
-  initial.param = NULL, norm.x = TRUE,
-  norm.y = ifelse(is.factor(train@y) || (class(train) ==
-  "dnnetSurvInput"), FALSE, TRUE), activate = "relu", n.hidden = c(10,
-  10), learning.rate = ifelse(learning.rate.adaptive \%in\% c("adam"),
-  0.001, 0.01), l1.reg = 0, l2.reg = 0, n.batch = 100,
-  n.epoch = 100, early.stop = ifelse(is.null(validate), FALSE, TRUE),
-  early.stop.det = 1000, plot = FALSE, accel = c("rcpp", "none")[1],
-  learning.rate.adaptive = c("constant", "adadelta", "adagrad",
-  "momentum", "adam", "amsgrad")[5], rho = c(0.9, 0.95, 0.99,
-  0.999)[ifelse(learning.rate.adaptive == "momentum", 1, 3)],
-  epsilon = c(10^-10, 10^-8, 10^-6, 10^-4)[2], beta1 = 0.9,
-  beta2 = 0.999, loss.f = ifelse(is.factor(train@y), "logit", "mse"),
-  pathway = FALSE, pathway.list = NULL, pathway.active = "identity",
-  l1.pathway = 0, l2.pathway = 0)
+dnnet(
+  train,
+  validate = NULL,
+  load.param = FALSE,
+  initial.param = NULL,
+  family = c("gaussin", "binomial", "multinomial", "poisson", "coxph")[1],
+  norm.x = TRUE,
+  norm.y = ifelse(is.factor(train@y) || (class(train) == "dnnetSurvInput") || (family ==
+    "poisson"), FALSE, TRUE),
+  activate = "relu",
+  n.hidden = c(10, 10),
+  learning.rate = ifelse(learning.rate.adaptive \%in\% c("adam"), 0.001, 0.01),
+  l1.reg = 0,
+  l2.reg = 0,
+  n.batch = 100,
+  n.epoch = 100,
+  early.stop = ifelse(is.null(validate), FALSE, TRUE),
+  early.stop.det = 1000,
+  plot = FALSE,
+  accel = c("rcpp", "none")[1],
+  learning.rate.adaptive = c("constant", "adadelta", "adagrad", "momentum", "adam",
+    "amsgrad")[5],
+  rho = c(0.9, 0.95, 0.99, 0.999)[ifelse(learning.rate.adaptive == "momentum", 1, 3)],
+  epsilon = c(10^-10, 10^-8, 10^-6, 10^-4)[2],
+  beta1 = 0.9,
+  beta2 = 0.999,
+  loss.f = ifelse(is.factor(train@y), "logit", "mse"),
+  pathway = FALSE,
+  pathway.list = NULL,
+  pathway.active = "identity",
+  l1.pathway = 0,
+  l2.pathway = 0
+)
 }
 \arguments{
 \item{train}{A \code{dnnetInput} or a \code{dnnetSurvInput} object, the training set.}
@@ -28,6 +46,8 @@ dnnet(train, validate = NULL, load.param = FALSE,
 \item{load.param}{Whether initial parameters are loaded into the model.}
 
 \item{initial.param}{The initial parameters to be loaded.}
+
+\item{family}{If it's specified as Poisson, a poisson model with log link will be fitted.}
 
 \item{norm.x}{A boolean variable indicating whether to normalize the input matrix.}
 

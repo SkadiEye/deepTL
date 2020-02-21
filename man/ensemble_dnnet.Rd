@@ -4,9 +4,18 @@
 \alias{ensemble_dnnet}
 \title{An ensemble model of DNNs}
 \usage{
-ensemble_dnnet(object, n.ensemble = 100, esCtrl,
+ensemble_dnnet(
+  object,
+  n.ensemble = 100,
+  esCtrl,
   unbalance.trt = c("None", "Over", "Under", "Balance")[1],
-  prop.keep = 1, best.opti = TRUE, min.keep = 10, verbose = TRUE)
+  bootstrap = TRUE,
+  prop.train = 1,
+  prop.keep = 1,
+  best.opti = TRUE,
+  min.keep = 10,
+  verbose = TRUE
+)
 }
 \arguments{
 \item{object}{A \code{dnnetInput} or a \code{dnnetSurvInput} object, the training set.}
@@ -16,6 +25,10 @@ ensemble_dnnet(object, n.ensemble = 100, esCtrl,
 \item{esCtrl}{A list of parameters to be passed to \code{dnnet}.}
 
 \item{unbalance.trt}{Treatment for unbalanced labels.}
+
+\item{bootstrap}{Indicator for whether a bootstrap sampling is used.}
+
+\item{prop.train}{If bootstrap == FALSE, a training/validation cut for the data will be used (0, 1).}
 
 \item{prop.keep}{The proportion of DNNs to be kept in the ensemble.}
 

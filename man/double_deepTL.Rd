@@ -4,9 +4,13 @@
 \alias{double_deepTL}
 \title{The algorithm for double deep treatment learning}
 \usage{
-double_deepTL(object, en_dnn_ctrl1 = NULL, en_dnn_ctrl2 = NULL,
+double_deepTL(
+  object,
+  en_dnn_ctrl1 = NULL,
+  en_dnn_ctrl2 = NULL,
   methods = c("revised-semi", "semi", "cov-adj", "ipw1", "ipw2", "ipw3",
-  "double-robust"))
+    "double-robust")
+)
 }
 \arguments{
 \item{object}{A \code{dnnetInput} or a \code{dnnetSurvInput} object, the training set.}

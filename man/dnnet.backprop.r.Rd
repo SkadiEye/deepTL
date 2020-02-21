@@ -4,10 +4,35 @@
 \alias{dnnet.backprop.r}
 \title{Back Propagation}
 \usage{
-dnnet.backprop.r(n.hidden, w.ini, load.param, initial.param, x, y, w,
-  valid, x.valid, y.valid, w.valid, activate, activate_, n.epoch, n.batch,
-  model.type, learning.rate, l1.reg, l2.reg, early.stop, early.stop.det,
-  learning.rate.adaptive, rho, epsilon, beta1, beta2, loss.f)
+dnnet.backprop.r(
+  n.hidden,
+  w.ini,
+  load.param,
+  initial.param,
+  x,
+  y,
+  w,
+  valid,
+  x.valid,
+  y.valid,
+  w.valid,
+  activate,
+  activate_,
+  n.epoch,
+  n.batch,
+  model.type,
+  learning.rate,
+  l1.reg,
+  l2.reg,
+  early.stop,
+  early.stop.det,
+  learning.rate.adaptive,
+  rho,
+  epsilon,
+  beta1,
+  beta2,
+  loss.f
+)
 }
 \arguments{
 \item{n.hidden}{A numeric vector for numbers of nodes for all hidden layers.}
