@@ -224,7 +224,7 @@ y <- rpois(n, x[, 1]**2 + x[, 2]**2)
 x_test <- matrix(rnorm(n_test*p), n_test, p)
 y_test <- rpois(n_test, x_test[, 1]**2 + x_test[, 2]**2)
 
-dnn_dat <- importDnnet(x, y)
+dnn_dat <- importDnnet(x[y > 0, ], y[y > 0])
 dnn_spl <- splitDnnet(dnn_dat, 0.8)
 args_dnnet <- appendArg(appendArg(esCtrl1, "train", dnn_spl$train, TRUE), "validate", dnn_spl$valid, TRUE)
 args_dnnet <- appendArg(args_dnnet, "family", "poisson", TRUE)
@@ -232,15 +232,15 @@ dnn_mod_cont <- do.call(dnnet, args_dnnet)
 pred_cont <- predict(dnn_mod_cont, x_test)
 
 bag_mod_cont <- ensemble_dnnet(dnn_dat, n_ensemble, esCtrl = appendArg(esCtrl1, "family", "poisson", TRUE))
-# bag_mod_cont <- ensemble_dnnet(dnn_dat, n_ensemble, esCtrl = esCtrl1, bootstrap = FALSE, prop.train = 0.8)
 pred_cont_bag <- predict(bag_mod_cont, x_test)
 
 cat("------- Example VII: Poisson ------- \n",
-    "      True log-lik:", round(mean(y_test*log(x_test[, 1]**2 + x_test[, 2]**2) - (x_test[, 1]**2 + x_test[, 2]**2)), 4), "\n",
-    "       DNN log-lik:", round(mean(y_test*pred_cont - exp(pred_cont)), 4), "\n",
-    "Bagged DNN log-lik:", round(mean(y_test*pred_cont_bag - exp(pred_cont_bag)), 4), "\n")
-plot(x_test[, 1]**2 + x_test[, 2]**2, exp(pred_cont))
+    "      True log-lik:", round(mean(y_test*log(x_test[, 1]**2 + x_test[, 2]**2) -
+                                          (x_test[, 1]**2 + x_test[, 2]**2)), 4), "\n",
+    "       DNN log-lik:", round(mean(y_test*log(pred_cont) - pred_cont), 4), "\n",
+    "Bagged DNN log-lik:", round(mean(y_test*log(pred_cont_bag) - pred_cont_bag), 4), "\n")
+plot(x_test[, 1]**2 + x_test[, 2]**2, pred_cont)
 abline(0, 1, col = 2)
-plot(x_test[, 1]**2 + x_test[, 2]**2, exp(pred_cont_bag))
+plot(x_test[, 1]**2 + x_test[, 2]**2, pred_cont_bag)
 abline(0, 1, col = 2)
 

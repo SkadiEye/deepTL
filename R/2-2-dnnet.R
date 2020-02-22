@@ -50,10 +50,11 @@
 #' @export
 dnnet <- function(train, validate = NULL,
                   load.param = FALSE, initial.param = NULL,
-                  family = c("gaussin", "binomial", "multinomial", "poisson", "coxph")[1],
+                  family = c("gaussin", "binomial", "multinomial", "poisson",
+                             "coxph", "poisson-nonzero")[1],
                   norm.x = TRUE,
                   norm.y = ifelse(is.factor(train@y) || (class(train) == "dnnetSurvInput") ||
-                                    (family == "poisson"), FALSE, TRUE),
+                                    (family %in% c("poisson", "poisson-nonzero")), FALSE, TRUE),
                   activate = "relu", n.hidden = c(10, 10),
                   learning.rate = ifelse(learning.rate.adaptive %in% c("adam"), 0.001, 0.01),
                   l1.reg = 0, l2.reg = 0, n.batch = 100, n.epoch = 100,
@@ -249,7 +250,7 @@ dnnet <- function(train, validate = NULL,
       }
     } else {
 
-      if(norm.y) {
+      if(norm.y && (!family %in% c("poisson", "poisson-nonzero"))) {
 
         train@y <- scale(train@y)
         norm$y.center <- attr(train@y, "scaled:center")
@@ -276,6 +277,11 @@ dnnet <- function(train, validate = NULL,
   if(family == "poisson") {
     model.type <- "poisson"
     loss.f <- "log-link"
+  }
+
+  if(family == "poisson-nonzero") {
+    model.type <- "poisson"
+    loss.f <- "poisson-nonzero"
   }
 
   if(sum(is.na(train@x)) > 0 | sum(is.na(train@y)) > 0)

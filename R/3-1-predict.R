@@ -86,6 +86,11 @@ setMethod("predict",
                        rep(1, sample.size) %*% t(object@norm$y.center))
             }
 
+            if(object@model.type == "poisson") {
+              pred <- (pred %*% object@weight[[n.layer + 1]] + one_sample_size %*% object@bias[[n.layer + 1]])[, 1]
+              return(exp(pred*object@norm$y.scale + object@norm$y.center))
+            }
+
             pred <- (pred %*% object@weight[[n.layer + 1]] + one_sample_size %*% object@bias[[n.layer + 1]])[, 1]
             return(pred*object@norm$y.scale + object@norm$y.center)
           })
