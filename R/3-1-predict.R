@@ -91,6 +91,12 @@ setMethod("predict",
               return(exp(pred*object@norm$y.scale + object@norm$y.center))
             }
 
+            if(object@model.type == "zip") {
+              pred <- (pred %*% object@weight[[n.layer + 1]] + one_sample_size %*% object@bias[[n.layer + 1]])
+              return(cbind(1/(1+exp(-(pred[, 1]*object@norm$y.scale + object@norm$y.center))),
+                           exp(pred[, 2]*object@norm$y.scale + object@norm$y.center)))
+            }
+
             pred <- (pred %*% object@weight[[n.layer + 1]] + one_sample_size %*% object@bias[[n.layer + 1]])[, 1]
             return(pred*object@norm$y.scale + object@norm$y.center)
           })
@@ -120,6 +126,24 @@ setMethod("predict",
               }
 
               pred.avg <- apply(pred.all, 2:3, mean)
+              return(pred.avg)
+            } else if(object@model.type %in% c("zip", "zinb")) {
+
+              count <- 0
+              for(i in 1:length(object@keep)) {
+
+                if(object@keep[i]) {
+
+                  count <- count + 1
+                  pred <- predict(object@model.list[[i]], newData)
+                  if(count == 1)
+                    pred.all <- array(NA, dim = c(sum(object@keep), dim(pred)))
+                  pred.all[count, , ] <- pred
+                }
+              }
+
+              pred.avg <- cbind(apply(pred.all[, , 1], 2, function(x) 1/(1+exp(-mean(log(x/(1-x)))))),
+                                apply(pred.all[, , 2], 2, function(x) exp(mean(log(x)))))
               return(pred.avg)
             } else {
 

@@ -289,6 +289,15 @@ SEXP backprop(NumericVector n_hidden, double w_ini, // List weight, List bias,
           } else {
             return(exp(x)/(1-exp(-exp(x))));
           }})) % (wi_ * one_dim_y.t()) / sum(wi_);
+      } else if(loss_f == "zip") {
+
+        vec y_pi_0 = 1 / (1 + exp(-y_pi.col(0)));
+        vec d_a_0 = -(1 - y_pi_0)/(1 - y_pi_0%(1-exp(-exp(y_pi.col(1))))) %
+          (yi_.col(0) - y_pi_0%(1-exp(-exp(y_pi.col(1))))) % wi_ / sum(wi_);
+        vec d_a_1 = -(yi_.col(0)%(yi_.col(1) - exp(y_pi.col(1))) -
+          (1 - yi_.col(0))%y_pi_0%exp(y_pi.col(1) - exp(y_pi.col(1)))/
+          (1 - y_pi_0%(1-exp(-exp(y_pi.col(1)))))) % wi_ / sum(wi_);
+        d_a(n_layer) = join_horiz(d_a_0, d_a_1);
       } else {
 
         // d_a(n_layer) = -(yi_ - y_pi) % wi_ / sum(wi_);
@@ -473,6 +482,12 @@ SEXP backprop(NumericVector n_hidden, double w_ini, // List weight, List bias,
               return(log(1 - exp(-exp(x))));
             }
           }), 1)) / sum(w_valid_);
+      } else if(loss_f == "zip") {
+
+        vec y_pred_0 = 1 / (1 + exp(-y_pred.col(0)));
+        vec y_pred_1 = exp(y_pred.col(1));
+        loss[k] = -sum(((1 - y_valid_.col(0))%log(1 - y_pred_0%(1 - exp(-y_pred_1))) +
+          y_valid_.col(0)%(log(y_pred_0) + y_valid_.col(1)%log(y_pred_1) - y_pred_1)) % w_valid_) / sum(w_valid_);
       }
 
       if(!is_finite(loss[k])) {

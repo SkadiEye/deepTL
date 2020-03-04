@@ -54,7 +54,7 @@ dnnet <- function(train, validate = NULL,
                              "coxph", "poisson-nonzero")[1],
                   norm.x = TRUE,
                   norm.y = ifelse(is.factor(train@y) || (class(train) == "dnnetSurvInput") ||
-                                    (family %in% c("poisson", "poisson-nonzero")), FALSE, TRUE),
+                                    (family %in% c("poisson", "poisson-nonzero", "zip", "zinb")), FALSE, TRUE),
                   activate = "relu", n.hidden = c(10, 10),
                   learning.rate = ifelse(learning.rate.adaptive %in% c("adam"), 0.001, 0.01),
                   l1.reg = 0, l2.reg = 0, n.batch = 100, n.epoch = 100,
@@ -250,7 +250,7 @@ dnnet <- function(train, validate = NULL,
       }
     } else {
 
-      if(norm.y && (!family %in% c("poisson", "poisson-nonzero"))) {
+      if(norm.y && (!family %in% c("poisson", "poisson-nonzero", "zip", "zinb"))) {
 
         train@y <- scale(train@y)
         norm$y.center <- attr(train@y, "scaled:center")
@@ -282,6 +282,14 @@ dnnet <- function(train, validate = NULL,
   if(family == "poisson-nonzero") {
     model.type <- "poisson"
     loss.f <- "poisson-nonzero"
+  }
+
+  if(family %in% c("zip", "zinb")) {
+    model.type <- family
+    loss.f <- family
+    train@y <- cbind((train@y > 0)*1, train@y)
+    if(!is.null(validate))
+      validate@y <- cbind((validate@y > 0)*1, validate@y)
   }
 
   if(sum(is.na(train@x)) > 0 | sum(is.na(train@y)) > 0)
@@ -441,7 +449,8 @@ dnnet <- function(train, validate = NULL,
                         bias = result[[2]],
                         loss = min.loss,
                         loss.traj = as.numeric(result[[3]]*mean(norm$y.scale**2)),
-                        label = ifelse(model.type %in% c("multi-regression", "regression", "survival", "poisson"),
+                        label = ifelse(model.type %in% c("multi-regression", "regression", "survival", "poisson",
+                                                         "zip", "zinb"),
                                        '', list(label))[[1]],
                         model.type = model.type,
                         model.spec = list(n.hidden = n.hidden,
