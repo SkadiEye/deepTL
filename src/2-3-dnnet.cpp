@@ -69,6 +69,17 @@ SEXP backprop(NumericVector n_hidden, double w_ini, // List weight, List bias,
   field<mat> vt_bar_w(n_layer + 1);
   field<vec> vt_bar_b(n_layer + 1);
   double adam_ind = 0;
+  double negbin_alpha = 1;
+  double best_negbin_alpha = negbin_alpha;
+  double log_negbin_alpha = log(negbin_alpha);
+  double dalpha = 0;
+  double last_dalpha = 0;
+  double alpha_ss = 0;
+  double alpha_egs = 0;
+  double alpha_es = 0;
+  double mt_alpha = 0;
+  double vt_alpha = 0;
+  double vt_bar_alpha = 0;
 
   for(int i = 0; i < n_layer + 1; i++) {
 
@@ -278,9 +289,16 @@ SEXP backprop(NumericVector n_hidden, double w_ini, // List weight, List bias,
 
         y_pi = exp(y_pi) / (sum(exp(y_pi), 1) * one_dim_y.t());
         d_a(n_layer) = -(yi_ - y_pi) % (wi_ * one_dim_y.t()) / sum(wi_);
-      } else if(loss_f == "log-link") {
+      } else if(loss_f == "poisson") {
 
         d_a(n_layer) = -(yi_ - exp(y_pi)) % (wi_ * one_dim_y.t()) / sum(wi_);
+      } else if(loss_f == "negbin") {
+
+        vec negvin_inv_plus_y = yi_ + 1/negbin_alpha;
+        dalpha = -sum(sum(-(negvin_inv_plus_y.transform([](double x){return(R::digamma(x));}) -
+          R::digamma(1/negbin_alpha))/negbin_alpha + log(1 + negbin_alpha*exp(y_pi))/negbin_alpha +
+          (yi_ - exp(y_pi))/(1 + negbin_alpha*exp(y_pi))));
+        d_a(n_layer) = -(yi_ - exp(y_pi)) / (1 + negbin_alpha*exp(y_pi)) % (wi_ * one_dim_y.t()) / sum(wi_);
       } else if(loss_f == "poisson-nonzero") {
 
         d_a(n_layer) = -(yi_ - y_pi.transform([](double x){
@@ -289,6 +307,18 @@ SEXP backprop(NumericVector n_hidden, double w_ini, // List weight, List bias,
           } else {
             return(exp(x)/(1-exp(-exp(x))));
           }})) % (wi_ * one_dim_y.t()) / sum(wi_);
+      } else if(loss_f == "negbin-nonzero") {
+
+        vec lambda = exp(y_pi);
+        vec one_plus_alpha_l = 1 + negbin_alpha*lambda;
+        vec aaa = log(one_plus_alpha_l)/negbin_alpha;
+        vec bbb = lambda/one_plus_alpha_l;
+        vec negvin_inv_plus_y = yi_ + 1/negbin_alpha;
+        dalpha = -sum(sum(-(negvin_inv_plus_y.transform([](double x){return(R::digamma(x));}) -
+          R::digamma(1/negbin_alpha))/negbin_alpha + aaa + (yi_ - lambda)/one_plus_alpha_l -
+          (-aaa + bbb) / (exp(aaa) - 1)));
+        d_a(n_layer) = -((yi_ - lambda) / one_plus_alpha_l -
+          bbb / (exp(aaa) - 1)) % (wi_ * one_dim_y.t()) / sum(wi_);
       } else if(loss_f == "zip") {
 
         vec y_pi_0 = 1 / (1 + exp(-y_pi.col(0)));
@@ -298,6 +328,21 @@ SEXP backprop(NumericVector n_hidden, double w_ini, // List weight, List bias,
           (1 - yi_.col(0))%y_pi_0%exp(y_pi.col(1) - exp(y_pi.col(1)))/
           (1 - y_pi_0%(1-exp(-exp(y_pi.col(1)))))) % wi_ / sum(wi_);
         d_a(n_layer) = join_horiz(d_a_0, d_a_1);
+      } else if(loss_f == "zinb") {
+
+        vec pi_ = 1 / (1 + exp(-y_pi.col(0)));
+        vec lambda_ = exp(y_pi.col(1));
+        vec one_plus_alpha_l = 1 + negbin_alpha*lambda_;
+        vec aaa = log(one_plus_alpha_l)/negbin_alpha;
+        vec bbb = lambda_/one_plus_alpha_l;
+        vec ksi_ = 1 / (1 + exp(-(y_pi.col(0) - aaa)));
+        vec d_a_0 = -pi_ + (1 - yi_.col(0)) % ksi_ + yi_.col(0);
+        vec d_a_1 = (-(1 - yi_.col(0)) % ksi_ + yi_.col(0) % (yi_.col(1) / lambda_ - 1)) % bbb;
+        vec y_plus_alpha_inv = yi_.col(1) + 1/negbin_alpha;
+        d_a(n_layer) = join_horiz(-d_a_0 % wi_ / sum(wi_), -d_a_1 % wi_ / sum(wi_));
+        dalpha = -sum(sum(-(1 - yi_.col(0)) % ksi_ % (-aaa + bbb) +
+          yi_.col(0) % (-(y_plus_alpha_inv.transform([](double x){return(R::digamma(x));}) -
+          R::digamma(1/negbin_alpha))/negbin_alpha + aaa + (yi_.col(1) / lambda_ - 1) % bbb)));
       } else {
 
         // d_a(n_layer) = -(yi_ - y_pi) % wi_ / sum(wi_);
@@ -312,12 +357,20 @@ SEXP backprop(NumericVector n_hidden, double w_ini, // List weight, List bias,
         last_db(n_layer) = last_db(n_layer) * rho + bias_grad    * learning_rate;
         dw(n_layer) = last_dw(n_layer);
         db(n_layer) = last_db(n_layer);
+        if((loss_f == "negbin") || (loss_f == "negbin-nonzero") || (loss_f == "zinb")) {
+          last_dalpha = last_dalpha * rho + dalpha * learning_rate;
+          dalpha = last_dalpha;
+        }
       } else if (learning_rate_adaptive == "adagrad") {
 
         weight_ss(n_layer) = weight_ss(n_layer) + square(d_w(n_layer));
         bias_ss(n_layer)   = bias_ss(n_layer)   + square(bias_grad);
         dw(n_layer) = d_w(n_layer)/sqrt(weight_ss(n_layer) + epsilon) * learning_rate;
         db(n_layer) = bias_grad   /sqrt(bias_ss(n_layer)   + epsilon) * learning_rate;
+        if((loss_f == "negbin") || (loss_f == "negbin-nonzero") || (loss_f == "zinb")) {
+          alpha_ss = alpha_ss + pow(dalpha, 2);
+          dalpha = dalpha/sqrt(alpha_ss + epsilon) * learning_rate;
+        }
       } else if (learning_rate_adaptive == "adadelta") {
 
         weight_egs(n_layer) = weight_egs(n_layer) * rho + (1-rho) * square(d_w(n_layer));
@@ -326,6 +379,11 @@ SEXP backprop(NumericVector n_hidden, double w_ini, // List weight, List bias,
         db(n_layer) = sqrt(bias_es(n_layer)   + epsilon) / sqrt(bias_egs(n_layer)   + epsilon) % bias_grad;
         weight_es(n_layer) = weight_es(n_layer) * rho + (1-rho) * square(dw(n_layer));
         bias_es(n_layer)   = bias_es(n_layer)   * rho + (1-rho) * square(db(n_layer));
+        if((loss_f == "negbin") || (loss_f == "negbin-nonzero") || (loss_f == "zinb")) {
+          alpha_egs = alpha_egs * rho + (1-rho) * pow(dalpha, 2);
+          dalpha = sqrt(alpha_es + epsilon)/sqrt(alpha_egs + epsilon) * dalpha;
+          alpha_es = alpha_es * rho + (1-rho) * pow(dalpha, 2);
+        }
       } else if (learning_rate_adaptive == "adam") {
 
         adam_ind = adam_ind + 1;
@@ -335,6 +393,11 @@ SEXP backprop(NumericVector n_hidden, double w_ini, // List weight, List bias,
         vt_b(n_layer) = vt_b(n_layer) * beta2 + (1-beta2) * square(bias_grad);
         dw(n_layer) = learning_rate / (1-pow(beta1, adam_ind)) * mt_w(n_layer) / (sqrt(vt_w(n_layer) / (1-pow(beta2, adam_ind))) + epsilon);
         db(n_layer) = learning_rate / (1-pow(beta1, adam_ind)) * mt_b(n_layer) / (sqrt(vt_b(n_layer) / (1-pow(beta2, adam_ind))) + epsilon);
+        if((loss_f == "negbin") || (loss_f == "negbin-nonzero") || (loss_f == "zinb")) {
+          mt_alpha = mt_alpha * beta1 + (1-beta1) * dalpha;
+          vt_alpha = vt_alpha * beta2 + (1-beta2) * pow(dalpha, 2);
+          dalpha = learning_rate / (1-pow(beta1, adam_ind)) * mt_alpha / (sqrt(vt_alpha / (1-pow(beta2, adam_ind))) + epsilon);
+        }
       } else if (learning_rate_adaptive == "amsgrad") {
 
         mt_w(n_layer) = mt_w(n_layer) * beta1 + (1-beta1) * d_w(n_layer);
@@ -351,13 +414,29 @@ SEXP backprop(NumericVector n_hidden, double w_ini, // List weight, List bias,
         vt_bar_b(n_layer) = max(vt_bb, 1);
         dw(n_layer) = learning_rate * mt_w(n_layer) / (sqrt(vt_bar_w(n_layer)) + epsilon);
         db(n_layer) = learning_rate * mt_b(n_layer) / (sqrt(vt_bar_b(n_layer)) + epsilon);
+        if((loss_f == "negbin") || (loss_f == "negbin-nonzero") || (loss_f == "zinb")) {
+          mt_alpha = mt_alpha * beta1 + (1-beta1) * dalpha;
+          vt_alpha = vt_alpha * beta2 + (1-beta2) * pow(dalpha, 2);
+          vec vt_balpha(2);
+          vt_balpha(0) = vt_alpha;
+          vt_balpha(1) = vt_bar_alpha;
+          vt_bar_alpha = max(vt_balpha);
+          dalpha = learning_rate * mt_alpha / (sqrt(vt_bar_alpha) + epsilon);
+        }
       } else {
 
         dw(n_layer) = d_w(n_layer) * learning_rate;
         db(n_layer) = bias_grad    * learning_rate;
+        if((loss_f == "negbin") || (loss_f == "negbin-nonzero") || (loss_f == "zinb")) {
+          dalpha = dalpha * learning_rate;
+        }
       }
       weight_(n_layer) = weight_(n_layer) - dw(n_layer) - l1_reg * (conv_to<mat>::from(weight_(n_layer) > 0) - conv_to<mat>::from(weight_(n_layer) < 0)) - l2_reg * (weight_(n_layer));
       bias_(n_layer)   = bias_(n_layer)   - db(n_layer);
+      if((loss_f == "negbin") || (loss_f == "negbin-nonzero") || (loss_f == "zinb")) {
+        log_negbin_alpha = log_negbin_alpha - dalpha;
+        negbin_alpha = exp(log_negbin_alpha);
+      }
       for(int j = n_layer - 1; j >= 0; j--) {
 
         d_h(j) = d_a(j + 1) * weight_(j + 1).t();
@@ -382,8 +461,8 @@ SEXP backprop(NumericVector n_hidden, double w_ini, // List weight, List bias,
 
           last_dw(j) = last_dw(j) * rho + d_w(j)    * learning_rate;
           last_db(j) = last_db(j) * rho + bias_grad * learning_rate;
-          dw(j) = d_w(j)    * learning_rate + rho * last_dw(j);
-          db(j) = bias_grad * learning_rate + rho * last_db(j);
+          dw(j) = last_dw(j); // d_w(j)    * learning_rate + rho * last_dw(j);
+          db(j) = last_db(j); // bias_grad * learning_rate + rho * last_db(j);
         } else if (learning_rate_adaptive == "adagrad") {
 
           weight_ss(j) = weight_ss(j) + square(d_w(j));
@@ -469,9 +548,15 @@ SEXP backprop(NumericVector n_hidden, double w_ini, // List weight, List bias,
 
         y_pred = y_pred % (y_pred > 0);
         loss[k] = sum(w_valid_ % pow(log(y_valid_ + 1) - log(y_pred + 1), 2)) / sum(w_valid_);
-      } else if(loss_f == "log-link") {
+      } else if(loss_f == "poisson") {
 
         loss[k] = sum(w_valid_ % sum(-y_valid_ % y_pred + exp(y_pred), 1)) / sum(w_valid_);
+      } else if(loss_f == "negbin") {
+
+        vec alpha_inv_plus_y = y_valid_ + 1/negbin_alpha;
+        loss[k] = sum(w_valid_ % sum(-alpha_inv_plus_y.transform([](double x){return(lgamma(x));}) +
+          lgamma(1/negbin_alpha) + log(1 + negbin_alpha*exp(y_pred))/negbin_alpha -
+          y_valid_ % (log_negbin_alpha + y_pred - log(1 + negbin_alpha*exp(y_pred))), 1)) / sum(w_valid_);
       } else if(loss_f == "poisson-nonzero") {
 
         loss[k] = sum(w_valid_ % sum(-y_valid_ % y_pred + exp(y_pred) +
@@ -482,12 +567,32 @@ SEXP backprop(NumericVector n_hidden, double w_ini, // List weight, List bias,
               return(log(1 - exp(-exp(x))));
             }
           }), 1)) / sum(w_valid_);
+      } else if(loss_f == "negbin-nonzero") {
+
+        vec lambda = exp(y_pred);
+        vec one_plus_alpha_l = 1 + negbin_alpha*lambda;
+        vec aaa = log(one_plus_alpha_l)/negbin_alpha;
+        vec alpha_inv_plus_y = y_valid_ + 1/negbin_alpha;
+        loss[k] = sum(w_valid_ % sum(-alpha_inv_plus_y.transform([](double x){return(lgamma(x));}) +
+          lgamma(1/negbin_alpha) + aaa - y_valid_ % (log_negbin_alpha + y_pred - log(one_plus_alpha_l)) +
+          log(1 - exp(-aaa)), 1)) / sum(w_valid_);
       } else if(loss_f == "zip") {
 
         vec y_pred_0 = 1 / (1 + exp(-y_pred.col(0)));
         vec y_pred_1 = exp(y_pred.col(1));
         loss[k] = -sum(((1 - y_valid_.col(0))%log(1 - y_pred_0%(1 - exp(-y_pred_1))) +
           y_valid_.col(0)%(log(y_pred_0) + y_valid_.col(1)%log(y_pred_1) - y_pred_1)) % w_valid_) / sum(w_valid_);
+      } else if(loss_f == "zinb") {
+
+        vec pi_ = 1 / (1 + exp(-y_pred.col(0)));
+        vec lambda_ = exp(y_pred.col(1));
+        vec one_plus_alpha_l = 1 + negbin_alpha*lambda_;
+        vec aaa = log(one_plus_alpha_l)/negbin_alpha;
+        vec y_plus_alpha_inv = y_valid_.col(1) + 1/negbin_alpha;
+        loss[k] = -sum(((1 - y_valid_.col(0)) % log(1 - pi_ % (1 - exp(-aaa))) +
+          y_valid_.col(0) % (log(pi_) + y_plus_alpha_inv.transform([](double x){return(lgamma(x));}) -
+          lgamma(1/negbin_alpha) + y_valid_.col(1)%(log_negbin_alpha + y_pred.col(1) -
+          log(one_plus_alpha_l)))) % w_valid_) / sum(w_valid_);
       }
 
       if(!is_finite(loss[k])) {
@@ -501,6 +606,9 @@ SEXP backprop(NumericVector n_hidden, double w_ini, // List weight, List bias,
           best_loss = loss[k];
           best_weight = weight_;
           best_bias = bias_;
+          if((loss_f == "negbin") || (loss_f == "negbin-nonzero") || (loss_f == "zinb")) {
+            best_negbin_alpha = negbin_alpha;
+          }
         }
 
         if(k > early_stop_det) {
@@ -530,6 +638,17 @@ SEXP backprop(NumericVector n_hidden, double w_ini, // List weight, List bias,
       best_weight_(i) = wrap(weight_(i));
       best_bias_(i) = wrap(bias_(i).t());
     }
+  }
+
+  if((loss_f == "negbin") || (loss_f == "negbin-nonzero") || (loss_f == "zinb")) {
+
+    List result(5);
+    result(0) = best_weight_;
+    result(1) = best_bias_;
+    result(2) = loss;
+    result(3) = break_k;
+    result(4) = best_negbin_alpha;
+    return(result);
   }
 
   List result(4);

@@ -76,6 +76,8 @@ ensemble_dnnet <- function(object,
     model.list[[i]] <- model
     if(i == 1) model.type <- model@model.type
     if(i == 1) model.spec <- model@model.spec
+    if((model.type %in% c("negbin", "negbin-nonzero", "zinb")) && (i > 1))
+      model.spec$negbin_alpha <- c(model.spec$negbin_alpha, model@model.spec$negbin_alpha)
 
     pred <- predict(model, object@x, cutoff = cutoff)
     if(model.type == "regression") {

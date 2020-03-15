@@ -86,12 +86,12 @@ setMethod("predict",
                        rep(1, sample.size) %*% t(object@norm$y.center))
             }
 
-            if(object@model.type == "poisson") {
+            if(object@model.type %in% c("poisson", "negbin")) {
               pred <- (pred %*% object@weight[[n.layer + 1]] + one_sample_size %*% object@bias[[n.layer + 1]])[, 1]
               return(exp(pred*object@norm$y.scale + object@norm$y.center))
             }
 
-            if(object@model.type == "zip") {
+            if(object@model.type %in% c("zip", "zinb")) {
               pred <- (pred %*% object@weight[[n.layer + 1]] + one_sample_size %*% object@bias[[n.layer + 1]])
               return(cbind(1/(1+exp(-(pred[, 1]*object@norm$y.scale + object@norm$y.center))),
                            exp(pred[, 2]*object@norm$y.scale + object@norm$y.center)))

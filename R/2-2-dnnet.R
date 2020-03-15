@@ -50,8 +50,8 @@
 #' @export
 dnnet <- function(train, validate = NULL,
                   load.param = FALSE, initial.param = NULL,
-                  family = c("gaussin", "binomial", "multinomial", "poisson",
-                             "coxph", "poisson-nonzero")[1],
+                  family = c("gaussin", "binomial", "multinomial", "poisson", "negbin",
+                             "coxph", "poisson-nonzero", "negbin-nonzero", "zip", "zinb")[1],
                   norm.x = TRUE,
                   norm.y = ifelse(is.factor(train@y) || (class(train) == "dnnetSurvInput") ||
                                     (family %in% c("poisson", "poisson-nonzero", "zip", "zinb")), FALSE, TRUE),
@@ -250,7 +250,8 @@ dnnet <- function(train, validate = NULL,
       }
     } else {
 
-      if(norm.y && (!family %in% c("poisson", "poisson-nonzero", "zip", "zinb"))) {
+      if(norm.y && (!family %in% c("poisson", "negbin", "poisson-nonzero",
+                                   "negbin-nonzero", "zip", "zinb"))) {
 
         train@y <- scale(train@y)
         norm$y.center <- attr(train@y, "scaled:center")
@@ -274,14 +275,14 @@ dnnet <- function(train, validate = NULL,
   if(class(train) == "dnnetSurvInput")
     model.type <- "survival"
 
-  if(family == "poisson") {
+  if(family %in% c("poisson", "poisson-nonzero")) {
     model.type <- "poisson"
-    loss.f <- "log-link"
+    loss.f <- family
   }
 
-  if(family == "poisson-nonzero") {
-    model.type <- "poisson"
-    loss.f <- "poisson-nonzero"
+  if(family %in% c("negbin", "negbin-nonzero")) {
+    model.type <- "negbin"
+    loss.f <- family
   }
 
   if(family %in% c("zip", "zinb")) {
@@ -449,8 +450,8 @@ dnnet <- function(train, validate = NULL,
                         bias = result[[2]],
                         loss = min.loss,
                         loss.traj = as.numeric(result[[3]]*mean(norm$y.scale**2)),
-                        label = ifelse(model.type %in% c("multi-regression", "regression", "survival", "poisson",
-                                                         "zip", "zinb"),
+                        label = ifelse(model.type %in% c("multi-regression", "regression", "survival",
+                                                         "poisson", "negbin", "zip", "zinb"),
                                        '', list(label))[[1]],
                         model.type = model.type,
                         model.spec = list(n.hidden = n.hidden,
@@ -466,7 +467,9 @@ dnnet <- function(train, validate = NULL,
                                           l1.pathway = l1.pathway,
                                           l2.pathway = l2.pathway,
                                           weight.pathway = weight.pathway,
-                                          bias.pathway = bias.pathway)))
+                                          bias.pathway = bias.pathway,
+                                          negbin_alpha = ifelse(model.type %in% c("negbin", "zinb"),
+                                                                result[[5]], 1))))
   } else {
 
     stop("Error fitting model. ")

@@ -261,17 +261,65 @@ pred_cont <- predict(dnn_mod_cont, x_test)
 bag_mod_cont <- ensemble_dnnet(dnn_dat, n_ensemble, esCtrl = appendArg(esCtrl1, "family", "poisson-nonzero", TRUE))
 pred_cont_bag <- predict(bag_mod_cont, x_test)
 
-cat("------- Example VIII: Poisson without Zeros ------- \n",
-    "      True log-lik:", round(mean(y_test[y_test > 0]*log(x_test[y_test > 0, 1]**2 + x_test[y_test > 0, 2]**2) -
-                                          (x_test[y_test > 0, 1]**2 + x_test[y_test > 0, 2]**2) -
-                                          log(1 - exp(-(x_test[y_test > 0, 1]**2 + x_test[y_test > 0, 2]**2)))), 4), "\n",
-    "       DNN log-lik:", round(mean(y_test[y_test > 0]*log(pred_cont[y_test > 0]) - pred_cont[y_test > 0] -
-                                          log(1 - exp(-pred_cont[y_test > 0]))), 4), "\n",
-    "Bagged DNN log-lik:", round(mean(y_test[y_test > 0]*log(pred_cont_bag[y_test > 0]) - pred_cont_bag[y_test > 0] -
-                                          log(1 - exp(-pred_cont_bag[y_test > 0]))), 4), "\n")
 plot(x_test[y_test > 0, 1]**2 + x_test[y_test > 0, 2]**2, pred_cont[y_test > 0])
 abline(0, 1, col = 2)
 plot(x_test[y_test > 0, 1]**2 + x_test[y_test > 0, 2]**2, pred_cont_bag[y_test > 0])
 abline(0, 1, col = 2)
+
+#### Negative Binomial ####
+n <- 1000
+theta <- 3
+esCtrl1$n.batch <- 50
+x <- matrix(runif(n*p), n, p)
+y <- rnegbin(n, exp(x[, 1]**2 + x[, 2]**2), theta)
+
+x_test <- matrix(runif(n_test*p), n_test, p)
+y_test <- rnegbin(n_test, exp(x_test[, 1]**2 + x_test[, 2]**2), theta)
+
+dnn_dat <- importDnnet(x, y)
+dnn_spl <- splitDnnet(dnn_dat, 0.8)
+args_dnnet <- appendArg(appendArg(esCtrl1, "train", dnn_spl$train, TRUE), "validate", dnn_spl$valid, TRUE)
+args_dnnet <- appendArg(args_dnnet, "family", "negbin", TRUE)
+dnn_mod_cont <- do.call(dnnet, args_dnnet)
+pred_cont <- predict(dnn_mod_cont, x_test)
+
+bag_mod_cont <- ensemble_dnnet(dnn_dat, n_ensemble, esCtrl = appendArg(esCtrl1, "family", "negbin", TRUE))
+pred_cont_bag <- predict(bag_mod_cont, x_test)
+
+plot(x_test[, 1]**2 + x_test[, 2]**2, log(pred_cont))
+abline(0, 1, col = 2)
+plot(x_test[, 1]**2 + x_test[, 2]**2, log(pred_cont_bag))
+abline(0, 1, col = 2)
+dnn_mod_cont@model.spec$negbin_alpha
+bag_mod_cont@model.spec$negbin_alpha
+
+#### Poisson without zeros
+n <- 1000
+theta <- 3
+esCtrl1$n.batch <- 50
+x <- matrix(runif(n*p), n, p)
+y <- rnegbin(n, exp(x[, 1] + x[, 2]), theta)
+
+x_test <- matrix(runif(n_test*p), n_test, p)
+y_test <- rnegbin(n_test, exp(x_test[, 1] + x_test[, 2]), theta)
+
+dnn_dat <- importDnnet(x[y > 0, ], y[y > 0])
+dnn_spl <- splitDnnet(dnn_dat, 0.8)
+args_dnnet <- appendArg(appendArg(esCtrl1, "train", dnn_spl$train, TRUE), "validate", dnn_spl$valid, TRUE)
+args_dnnet <- appendArg(args_dnnet, "family", "negbin-nonzero", TRUE)
+dnn_mod_cont <- do.call(dnnet, args_dnnet)
+pred_cont <- predict(dnn_mod_cont, x_test)
+
+bag_mod_cont <- ensemble_dnnet(dnn_dat, n_ensemble, esCtrl = appendArg(esCtrl1, "family", "negbin-nonzero", TRUE))
+pred_cont_bag <- predict(bag_mod_cont, x_test)
+
+plot(x_test[y_test > 0, 1] + x_test[y_test > 0, 2], log(pred_cont[y_test > 0]))
+abline(0, 1, col = 2)
+plot(x_test[y_test > 0, 1] + x_test[y_test > 0, 2], log(pred_cont_bag[y_test > 0]))
+abline(0, 1, col = 2)
+dnn_mod_cont@model.spec$negbin_alpha
+bag_mod_cont@model.spec$negbin_alpha
+
+
 
 
