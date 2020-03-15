@@ -293,8 +293,8 @@ abline(0, 1, col = 2)
 dnn_mod_cont@model.spec$negbin_alpha
 bag_mod_cont@model.spec$negbin_alpha
 
-#### Poisson without zeros
-n <- 1000
+#### Negative Binomial without zeros
+n <- 10000
 theta <- 3
 esCtrl1$n.batch <- 50
 x <- matrix(runif(n*p), n, p)

@@ -11,7 +11,7 @@ esCtrl1 <- list(n.hidden = c(50, 40, 30, 20),
                 plot = TRUE, accel = "rcpp", learning.rate.adaptive = "adam")
 
 #### zinb model ####
-n <- 10000
+n <- 1000
 theta <- 3
 esCtrl1$n.batch <- 100
 esCtrl1$n.epoch <- 100
