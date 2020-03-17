@@ -24,7 +24,9 @@ You may also use it for,
     neural networks
   - ***Bagging***: Bootstrap aggregating for DNN models, with an
     automatic scheme to select the optimal subset of DNNs (details in
-    paper: Mi et al. (2019))
+    paper: Mi et al.
+    (2019))
+  - \[[example](https://github.com/SkadiEye/deepTL/blob/master/dnnet.md)\]
 
 # Installation
 
