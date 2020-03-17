@@ -95,6 +95,9 @@ dnnet <- function(train, validate = NULL,
   else
     n.outcome <- dim(train@y)[2]
 
+  if(n.outcome == 1 && (!is.factor(train@y)))
+    train@y <- c(train@y)
+
   if(!is.null(train@w)) {
 
     if(length(train@w) != sample.size)
@@ -167,7 +170,7 @@ dnnet <- function(train, validate = NULL,
           # if(loss.f == "logit") loss.f <- "cross-entropy"
         }
       }
-    } else if(class(train@y)[1] != "matrix") {
+    } else if(n.outcome == 1) {
 
       train@y <- (train@y - norm$y.center)/norm$y.scale
       if(!is.null(validate))
@@ -265,10 +268,11 @@ dnnet <- function(train, validate = NULL,
             validate@y <- (validate@y - rep(1, valid.size) %*% t(norm$y.center))/
           (rep(1, valid.size) %*% t(norm$y.scale))
       }
-      if(class(train@y)[1] != "matrix")
+      if(n.outcome == 1) {
         model.type <- "regression"
-      else
+      } else {
         model.type <- "multi-regression"
+      }
     }
   }
 
