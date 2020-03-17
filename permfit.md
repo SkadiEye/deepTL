@@ -10,12 +10,6 @@ support vector machines, random forests, etc).
 ``` r
 suppressMessages(library(deepTL))
 library(MASS)
-devtools::load_all()
-```
-
-    ## Loading deepTL
-
-``` r
 set.seed(1234)  
 n <- 1000
 p <- 20
@@ -108,17 +102,7 @@ permfit_svm@importance[1:10, c("importance", "importance_pval")]
 ## Performance improvement with PermFIT-SVM
 
 ``` r
-library(e1071)
-```
-
-    ## 
-    ## Attaching package: 'e1071'
-
-    ## The following object is masked from 'package:deepTL':
-    ## 
-    ##     sigmoid
-
-``` r
+suppressMessages(library(e1071))
 svm_mod <- tune.svm(x, y, gamma = 10**(-(0:4)), cost = 10**(0:4/2), tunecontrol = tune.control(cross = 5))
 svm_pred <- predict(svm_mod$best.model, x_test)
 

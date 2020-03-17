@@ -16,7 +16,7 @@ mod_permfit <- function(method, model.type, object, ...) {
   } else if (method == "lasso") {
 
     lasso_family <- ifelse(model.type == "regression", "gaussian",
-                           ifelse(model.type == "binary-classification"), "binomial", "cox")
+                           ifelse(model.type == "binary-classification", "binomial", "cox"))
     cv_lasso_mod <- glmnet::cv.glmnet(object@x, object@y, family = lasso_family)
     mod <- glmnet::glmnet(object@x, object@y, family = lasso_family,
                           lambda = cv_lasso_mod$lambda[which.min(cv_lasso_mod$cvm)])

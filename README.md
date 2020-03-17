@@ -8,15 +8,15 @@ designed for,
     permutation-based feature importance test scheme for black-box
     models (DNNs, support vector machines, random forests, etc)
     \[Manuscript submitted\]
-    \[[example](https://github.com/SkadiEye/deepTL/permfit.md)\]
+    \[[example](https://github.com/SkadiEye/deepTL/blob/master/permfit.md)\]
   - ***deepTL***: Deep Treatment Learning, an efficient semiparametric
     framework coupled with ensemble DNNs for adjusting complex
     confounding \[Manuscript submitted\]
-    \[[example](https://github.com/SkadiEye/deepTL/deeptl.md)\]
+    \[[example](https://github.com/SkadiEye/deepTL/blob/master/deeptl.md)\]
   - ***EndLot***: ENsemble Decision Learning Optimal Treatment, a
     DNN-based method for optimal individualized treatment learning
     (Paper: Mi et al. (2019))
-    \[[example](https://github.com/SkadiEye/deepTL/endlot.md)\]
+    \[[example](https://github.com/SkadiEye/deepTL/blob/master/endlot.md)\]
 
 You may also use it for,
 
