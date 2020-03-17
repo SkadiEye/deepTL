@@ -52,6 +52,7 @@ setClass("dnnetSurvInput",
 #'
 #' @seealso
 #' \code{\link{dnnetInput-class}}\cr
+#' \code{\link{dnnet}}\cr
 #' @export
 setClass("dnnet",
          slots = list(
@@ -93,6 +94,7 @@ setClass("trtInput",
 #'
 #' @seealso
 #' \code{\link{dnnet-class}}\cr
+#' \code{\link{ensemble_dnnet}}\cr
 #' @export
 setClass("dnnetEnsemble",
          slots = list(
@@ -102,3 +104,40 @@ setClass("dnnetEnsemble",
            loss = "numeric",
            keep = "ANY"
          ))
+
+#################################
+#### itrMod class
+#' An S4 class containing an individualized treatment rule (ITR) object
+#'
+#' @slot model a model for ITR prediction
+#' @slot framework a character for ITR framework
+#'
+#' @seealso
+#' \code{\link{dnnet-class}}\cr
+#' @export
+setClass("itrMod",
+         slots = list(
+           model = "ANY",
+           framework = "character"
+         ))
+
+#################################
+#### PermFIT class
+#' An S4 class containing an permutation-based feature importance test (PermFIT) object
+#'
+#' @slot model a model for ITR prediction
+#' @slot importance a data.frame of importance
+#' @slot block_importance a data.frame of block importance
+#' @slot validation_index indices for cross-fitting
+#' @slot y_hat cross-fitted prediction or prediction from validation
+#'
+#' @export
+setClass("PermFIT",
+         slots = list(
+           model = "ANY",
+           importance = "data.frame",
+           block_importance = "data.frame",
+           validation_index = "ANY",
+           y_hat = "ANY"
+         ))
+
