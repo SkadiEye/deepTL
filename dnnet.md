@@ -52,7 +52,7 @@ dnn_en_100_mod <- ensemble_dnnet(dnn_obj, 100, esCtrl, best.opti = FALSE, verbos
 dnn_en_100_pred <- predict(dnn_en_100_mod, x_test)
 ```
 
-## Bootstrap aggregating (Bagging) with optimal subset of DNNs
+## Bootstrap aggregating (Bagging) with optimal subset of DNNs (details in Mi et al. (2019))
 
 ``` r
 dnn_en_opt_mod <- ensemble_dnnet(dnn_obj, 100, esCtrl, verbose = FALSE)
@@ -72,3 +72,17 @@ data.frame(dnn = c("A single DNN", "Bagging of 10 DNNs", "Bagging of 100 DNNs", 
     ## 2                      Bagging of 10 DNNs 2.037568
     ## 3                     Bagging of 100 DNNs 1.913064
     ## 4 Bagging of 100 DNNs with optimal subset 1.834117
+
+# References
+
+<div id="refs" class="references">
+
+<div id="ref-mi2019bagging">
+
+Mi, X., Zou, F., and Zhu, R. (2019), “Bagging and deep learning in
+optimal individualized treatment rules,” *Biometrics*, Wiley Online
+Library, 75, 674–684.
+
+</div>
+
+</div>
