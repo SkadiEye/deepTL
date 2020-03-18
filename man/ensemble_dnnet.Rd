@@ -32,7 +32,7 @@ ensemble_dnnet(
 
 \item{prop.keep}{The proportion of DNNs to be kept in the ensemble.}
 
-\item{best.opti}{Whether to run the algorithm to keep the optimal number of DNNs.}
+\item{best.opti}{Whether to run the algorithm to keep the optimal subset of DNNs.}
 
 \item{min.keep}{Minimal number of DNNs to be kept.}
 

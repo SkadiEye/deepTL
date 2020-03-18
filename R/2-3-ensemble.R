@@ -12,7 +12,7 @@
 #' @param bootstrap Indicator for whether a bootstrap sampling is used.
 #' @param prop.train If bootstrap == FALSE, a training/validation cut for the data will be used (0, 1).
 #' @param prop.keep The proportion of DNNs to be kept in the ensemble.
-#' @param best.opti Whether to run the algorithm to keep the optimal number of DNNs.
+#' @param best.opti Whether to run the algorithm to keep the optimal subset of DNNs.
 #' @param min.keep Minimal number of DNNs to be kept.
 #' @param verbose Whether the progress to be printed.
 #'
@@ -79,7 +79,7 @@ ensemble_dnnet <- function(object,
     if((model.type %in% c("negbin", "negbin-nonzero", "zinb")) && (i > 1))
       model.spec$negbin_alpha <- c(model.spec$negbin_alpha, model@model.spec$negbin_alpha)
 
-    pred <- predict(model, object@x, cutoff = cutoff)
+    pred <- predict(model, object@x)
     if(model.type == "regression") {
 
       pred.table[i, ] <- pred

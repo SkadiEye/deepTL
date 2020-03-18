@@ -13,6 +13,10 @@
 #'
 #' @return Returns a \code{list} of results.
 #'
+#' @importFrom stats lm
+#' @importFrom stats coefficients
+#' @importFrom stats vcov
+#'
 #' @export
 double_deepTL <- function(object,
                           en_dnn_ctrl1 = NULL,
@@ -44,10 +48,10 @@ double_deepTL <- function(object,
 
   if("revised-semi" %in% methods || "cov-adj" %in% methods) {
 
-    lm_mod <- lm(object@y ~ z_nmrc + z_pred)
-    beta1 <- coefficients(lm_mod)[2]
+    lm_mod <- stats::lm(object@y ~ z_nmrc + z_pred)
+    beta1 <- stats::coefficients(lm_mod)[2]
     if("cov-adj" %in% methods)
-      result <- rbind(result, data.frame(method = "cov-adj-dnn-en", beta = beta1, var = vcov(lm_mod)[2, 2]))
+      result <- rbind(result, data.frame(method = "cov-adj-dnn-en", beta = beta1, var = stats::vcov(lm_mod)[2, 2]))
     if("revised-semi" %in% methods) {
 
       cat("Fitting E(Y - b1*Z|X) ... \n")

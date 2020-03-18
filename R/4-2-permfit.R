@@ -1,3 +1,29 @@
+###########################################################
+### Model passed to PermFIT (Internal)
+
+#' Model passed to PermFIT (Internal)
+#'
+#' Model passed to PermFIT (Internal)
+#'
+#' @param method Name of the model.
+#' @param model.type Type of model.
+#' @param object A dnnetInput or dnnetSurvInput object.
+#' @param ... Orger parameters passed to the model.
+#'
+#' @return Returns a specific model.
+#'
+#' @importFrom randomForestSRC rfsrc
+#' @importFrom randomForest randomForest
+#' @importFrom glmnet cv.glmnet
+#' @importFrom glmnet glmnet
+#' @importFrom stats lm
+#' @importFrom stats glm
+#' @importFrom survival coxph
+#' @importFrom survival Surv
+#' @importFrom e1071 svm
+#' @importFrom e1071 tune.svm
+#'
+#' @export
 mod_permfit <- function(method, model.type, object, ...) {
 
   if(method == "ensemble_dnnet") {
@@ -23,11 +49,11 @@ mod_permfit <- function(method, model.type, object, ...) {
   } else if (method == "linear") {
 
     if(model.type == "regression") {
-      mod <- lm(y ~ ., data.frame(x = object@x, y = object@y))
+      mod <- stats::lm(y ~ ., data.frame(x = object@x, y = object@y))
     } else if(model.type == "binary-classification") {
-      mod <- glm(y ~ ., family = "binomial", data = data.frame(x = object@x, y = object@y))
+      mod <- stats::glm(y ~ ., family = "binomial", data = data.frame(x = object@x, y = object@y))
     } else {
-      mod <- coxph(Surv(y, e) ~ ., data = data.frame(x = train@x, y = train@y, e = train@e))
+      mod <- survival::coxph(survival::Surv(y, e) ~ ., data = data.frame(x = object@x, y = object@y, e = object@e))
     }
   } else if (method == "svm") {
 
@@ -36,7 +62,7 @@ mod_permfit <- function(method, model.type, object, ...) {
     mod <- mod$best.model
   } else if (method == "dnnet") {
 
-    spli_obj <- splitDnnet(train, 0.8)
+    spli_obj <- splitDnnet(object, 0.8)
     mod <- do.call(dnnet, appendArg(appendArg(list(...), "train", spli_obj$train, TRUE),
                                     "validate", spli_obj$valid, TRUE))
   } else {
@@ -46,6 +72,21 @@ mod_permfit <- function(method, model.type, object, ...) {
   return(mod)
 }
 
+###########################################################
+### Model prediction passed to PermFIT (Internal)
+
+#' Model prediction passed to PermFIT (Internal)
+#'
+#' Model prediction passed to PermFIT (Internal)
+#'
+#' @param mod Model for prediction.
+#' @param object A dnnetInput or dnnetSurvInput object.
+#' @param method Name of the model.
+#' @param model.type Type of the model.
+#'
+#' @return Returns predictions.
+#'
+#' @export
 predict_mod_permfit <- function(mod, object, method, model.type) {
 
   if(model.type == "regression") {
@@ -60,7 +101,7 @@ predict_mod_permfit <- function(mod, object, method, model.type) {
   } else if(model.type == "binary-classification") {
 
     if(method %in% c("ensemble_dnnet", "dnnet")) {
-      return(predict(mod, object@x)[, dnn_mod_bnry@label[1]])
+      return(predict(mod, object@x)[, mod@label[1]])
     } else if(method == "random_forest") {
       return(predict(mod, object@x, type = "prob")[, 1])
     } else if (method == "lasso") {
@@ -69,7 +110,7 @@ predict_mod_permfit <- function(mod, object, method, model.type) {
       return(1 - predict(mod, data.frame(x = object@x, y = object@y), type = "response"))
     } else if (method == "svm") {
       return(attr(predict(mod, object@x, decision.values = TRUE, probability = TRUE),
-                  "probabilities")[, levels(train@y)[1]])
+                  "probabilities")[, levels(object@y)[1]])
     }
   } else if(model.type == "survival") {
 
@@ -89,6 +130,20 @@ predict_mod_permfit <- function(mod, object, method, model.type) {
   }
 }
 
+###########################################################
+### Log-likelihood for Cox-Model (Internal)
+
+#' Log-likelihood for Cox-Model (Internal)
+#'
+#' Log-likelihood for Cox-Model (Internal)
+#'
+#' @param h Log hazard.
+#' @param y Event time.
+#' @param e Event status.
+#'
+#' @return Returns log-likelihood.
+#'
+#' @export
 cox_logl <- function(h, y, e) {
   order_y <- order(y)
   n <- length(y)
@@ -96,6 +151,21 @@ cox_logl <- function(h, y, e) {
   sum((h[order_y] - log(colSums(exp(rep(1, n) %*% t(h[order_y]))*map_)))*e[order_y])
 }
 
+###########################################################
+### Log-likelihood Difference (Internal)
+
+#' Log-likelihood Difference (Internal)
+#'
+#' Log-likelihood Difference (Internal)
+#'
+#' @param model.type Type of the model.
+#' @param y_hat Y hat.
+#' @param y_hat0 Another Y hat.
+#' @param object Data object.
+#'
+#' @return Returns log-likelihood difference.
+#'
+#' @export
 log_lik_diff <- function(model.type, y_hat, y_hat0, object) {
 
   if(model.type == "regression") {
@@ -111,6 +181,34 @@ log_lik_diff <- function(model.type, y_hat, y_hat0, object) {
   }
 }
 
+###########################################################
+### PermFIT
+
+#' PermFIT: A permutation-based feature importance test.
+#'
+#' @param train An dnnetInput or dnnetSurvInput object.
+#' @param validate A validation dataset is required when k_fold = 0.
+#' @param k_fold K-fold cross-fitting. If not, set k_fold to zero.
+#' @param n_perm Number of permutations repeated.
+#' @param pathway_list A list of pathways to be jointly tested.
+#' @param method Models, including \code{ensemble_dnnet} for ensemble deep
+#'   neural networks, \code{random_forest} for random forests or random
+#'   survival forests, \code{lasso} for linear/logistic/cox lasso, \
+#'   \code{linear} for linear/logistic/coxph regression, \code{svm}
+#'   for svms with Gaussian kernels, and \code{dnnet} with single deep
+#'   neural network.
+#' @param shuffle If shuffle is null, the data will be shuffled for
+#'   cross-fitting; if random shuffle is not desired, please provide
+#'   a bector of numbers for cross-fitting indices
+#' @param ... Additional parameters passed to each method.
+#'
+#' @return Returns a PrmFIT object.
+#'
+#' @importFrom stats sd
+#' @importFrom stats pnorm
+#' @importFrom stats var
+#'
+#' @export
 permfit <- function(train, validate = NULL, k_fold = 5,
                     n_perm = 100, pathway_list = list(),
                     method = c("ensemble_dnnet", "random_forest",
@@ -227,11 +325,11 @@ permfit <- function(train, validate = NULL, k_fold = 5,
     imp <- data.frame(var_name = rownames(train@x))
   }
   imp$importance <- apply(apply(p_score2, 2:3, mean), 2, mean)
-  imp$importance_sd <- sqrt(apply(apply(p_score2, 2:3, mean), 2, var)/n_valid)
-  imp$importance_pval <- 1 - pnorm(imp$importance/imp$importance_sd)
+  imp$importance_sd <- sqrt(apply(apply(p_score2, 2:3, mean), 2, stats::var)/n_valid)
+  imp$importance_pval <- 1 - stats::pnorm(imp$importance/imp$importance_sd)
   if(n_perm > 1) {
-    imp$importance_sd_x <- apply(apply(p_score2, c(1, 3), mean), 2, sd)
-    imp$importance_pval_x <- 1 - pnorm(imp$importance/imp$importance_sd_x)
+    imp$importance_sd_x <- apply(apply(p_score2, c(1, 3), mean), 2, stats::sd)
+    imp$importance_pval_x <- 1 - stats::pnorm(imp$importance/imp$importance_sd_x)
   }
 
   imp_block <- data.frame()
@@ -243,11 +341,11 @@ permfit <- function(train, validate = NULL, k_fold = 5,
       imp_block <- data.frame(block = names(pathway_list))
     }
     imp_block$importance <- apply(apply(p_score, 2:3, mean), 2, mean)
-    imp_block$importance_sd <- sqrt(apply(apply(p_score, 2:3, mean), 2, var)/n_valid)
-    imp_block$importance_pval <- 1 - pnorm(imp_block$importance/imp_block$importance_sd)
+    imp_block$importance_sd <- sqrt(apply(apply(p_score, 2:3, mean), 2, stats::var)/n_valid)
+    imp_block$importance_pval <- 1 - stats::pnorm(imp_block$importance/imp_block$importance_sd)
     if(n_perm > 1) {
-      imp_block$importance_sd_x <- apply(apply(p_score, c(1, 3), mean), 2, sd)
-      imp_block$importance_pval_x <- 1 - pnorm(imp_block$importance/imp_block$importance_sd_x)
+      imp_block$importance_sd_x <- apply(apply(p_score, c(1, 3), mean), 2, stats::sd)
+      imp_block$importance_pval_x <- 1 - stats::pnorm(imp_block$importance/imp_block$importance_sd_x)
     }
   }
 

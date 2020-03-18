@@ -9,10 +9,11 @@ dnnet(
   validate = NULL,
   load.param = FALSE,
   initial.param = NULL,
-  family = c("gaussin", "binomial", "multinomial", "poisson", "coxph")[1],
+  family = c("gaussin", "binomial", "multinomial", "poisson", "negbin", "coxph",
+    "poisson-nonzero", "negbin-nonzero", "zip", "zinb")[1],
   norm.x = TRUE,
-  norm.y = ifelse(is.factor(train@y) || (class(train) == "dnnetSurvInput") || (family ==
-    "poisson"), FALSE, TRUE),
+  norm.y = ifelse(is.factor(train@y) || (class(train) == "dnnetSurvInput") || (family
+    \%in\% c("poisson", "poisson-nonzero", "zip", "zinb")), FALSE, TRUE),
   activate = "relu",
   n.hidden = c(10, 10),
   learning.rate = ifelse(learning.rate.adaptive \%in\% c("adam"), 0.001, 0.01),
@@ -78,7 +79,7 @@ an adaptive learning rate adjustment method, 0.1 by defalut.}
 \item{accel}{"rcpp" to use the Rcpp version and "none" (default) to use the R version for back propagation.}
 
 \item{learning.rate.adaptive}{Adaptive learning rate adjustment methods, one of the following,
-"constant", "adadelta", "adagrad", "momentum", "adam".}
+"constant", "adam", "amsgrad", "adadelta", "adagrad".}
 
 \item{rho}{A parameter used in momentum.}
 

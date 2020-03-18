@@ -29,4 +29,5 @@ An S4 class containing a deep neural network
 
 \seealso{
 \code{\link{dnnetInput-class}}\cr
+\code{\link{dnnet}}\cr
 }

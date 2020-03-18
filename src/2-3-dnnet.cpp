@@ -6,8 +6,40 @@ using namespace Rcpp;
 using namespace arma;
 using namespace std;
 
+//' Backprop (Internal)
+//'
+//' @param n_hidden Hidden layer numbers.
+//' @param w_ini Initial weights.
+//' @param load_param Whether to load parameters.
+//' @param weight Weights.
+//' @param bias Biases.
+//' @param x Training.
+//' @param y Training.
+//' @param w Training.
+//' @param valid Whether to use a validation set.
+//' @param x_valid Validation.
+//' @param y_valid Validation.
+//' @param w_valid Validation.
+//' @param activ Activation function.
+//' @param n_epoch Number of epochs.
+//' @param n_batch Batch size.
+//' @param model_type Model type.
+//' @param learning_rate (Initial) learning rate.
+//' @param l1_reg L1-penalty.
+//' @param l2_reg L2-penalty.
+//' @param early_stop Whether to early stop.
+//' @param early_stop_det Number of epochs to determine early-stop.
+//' @param learning_rate_adaptive Adaptive learning rate adjustment method.
+//' @param rho Parameter.
+//' @param epsilon Parameter.
+//' @param beta1 Parameter.
+//' @param beta2 Parameter.
+//' @param loss_f Loss function.
+//'
+//' @return A list of outputs
+//'
 // [[Rcpp::export]]
-SEXP backprop(NumericVector n_hidden, double w_ini, // List weight, List bias,
+SEXP backprop(NumericVector n_hidden, double w_ini,
               bool load_param, List weight, List bias,
               NumericMatrix x, NumericMatrix y, NumericVector w, bool valid,
               NumericMatrix x_valid, NumericVector y_valid, NumericVector w_valid,
@@ -658,11 +690,49 @@ SEXP backprop(NumericVector n_hidden, double w_ini, // List weight, List bias,
   result(3) = break_k;
   return(result);
 }
-
+//' Backprop Long (Internal)
+//'
+//' @param n_hidden Hidden layer numbers.
+//' @param w_ini Initial weights.
+//' @param weight_pathway Pathway weights.
+//' @param bias_pathway Pathway Biases.
+//' @param l1_pathway L1-penalty for pathway.
+//' @param l2_pathway L2-penalty for pathway.
+//' @param load_param Whether to load parameters.
+//' @param weight Weights.
+//' @param bias Biases.
+//' @param x Training.
+//' @param y Training.
+//' @param w Training.
+//' @param x_pathway Training.
+//' @param valid Whether to use a validation set.
+//' @param x_valid Validation.
+//' @param y_valid Validation.
+//' @param w_valid Validation.
+//' @param x_valid_pathway Validation.
+//' @param activ Activation function.
+//' @param activ_pathway Activation function for pathway.
+//' @param n_epoch Number of epochs.
+//' @param n_batch Batch size.
+//' @param model_type Model type.
+//' @param learning_rate (Initial) learning rate.
+//' @param l1_reg L1-penalty.
+//' @param l2_reg L2-penalty.
+//' @param early_stop Whether to early stop.
+//' @param early_stop_det Number of epochs to determine early-stop.
+//' @param learning_rate_adaptive Adaptive learning rate adjustment method.
+//' @param rho Parameter.
+//' @param epsilon Parameter.
+//' @param beta1 Parameter.
+//' @param beta2 Parameter.
+//' @param loss_f Loss function.
+//'
+//' @return A list of outputs
+//'
 // [[Rcpp::export]]
 SEXP backprop_long(NumericVector n_hidden, double w_ini,
                    List weight_pathway, NumericVector bias_pathway,
-                   double l1_pathway, double l2_pathway, // List weight, List bias,
+                   double l1_pathway, double l2_pathway,
                    bool load_param, List weight, List bias,
                    NumericMatrix x, NumericMatrix y, NumericVector w, List x_pathway, bool valid,
                    NumericMatrix x_valid, NumericVector y_valid, NumericVector w_valid, List x_valid_pathway,
@@ -1358,7 +1428,38 @@ SEXP backprop_long(NumericVector n_hidden, double w_ini,
   result(5) = best_bias_pathway_;
   return(result);
 }
-
+//' Backprop Surv (Internal)
+//'
+//' @param n_hidden Hidden layer numbers.
+//' @param w_ini Initial weights.
+//' @param load_param Whether to load parameters.
+//' @param weight Weights.
+//' @param bias Biases.
+//' @param x Training.
+//' @param y Training.
+//' @param w Training.
+//' @param valid Whether to use a validation set.
+//' @param x_valid Validation.
+//' @param y_valid Validation.
+//' @param w_valid Validation.
+//' @param activ Activation function.
+//' @param n_epoch Number of epochs.
+//' @param n_batch Batch size.
+//' @param model_type Model type.
+//' @param learning_rate (Initial) learning rate.
+//' @param l1_reg L1-penalty.
+//' @param l2_reg L2-penalty.
+//' @param early_stop Whether to early stop.
+//' @param early_stop_det Number of epochs to determine early-stop.
+//' @param learning_rate_adaptive Adaptive learning rate adjustment method.
+//' @param rho Parameter.
+//' @param epsilon Parameter.
+//' @param beta1 Parameter.
+//' @param beta2 Parameter.
+//' @param loss_f Loss function.
+//'
+//' @return A list of outputs
+//'
 // [[Rcpp::export]]
 SEXP backprop_surv(NumericVector n_hidden, double w_ini, // List weight, List bias,
                    bool load_param, List weight, List bias,

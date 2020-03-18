@@ -23,4 +23,5 @@ An S4 class containing an ensemble of deep neural networks
 
 \seealso{
 \code{\link{dnnet-class}}\cr
+\code{\link{ensemble_dnnet}}\cr
 }

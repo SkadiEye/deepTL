@@ -6,8 +6,40 @@ using namespace Rcpp;
 using namespace arma;
 using namespace std;
 
+//' Backprop Block (Internal)
+//'
+//' @param n_hidden Hidden layer numbers.
+//' @param w_ini Initial weights.
+//' @param load_param Whether to load parameters.
+//' @param weight Weights.
+//' @param bias Biases.
+//' @param x Training.
+//' @param y Training.
+//' @param w Training.
+//' @param valid Whether to use a validation set.
+//' @param x_valid Validation.
+//' @param y_valid Validation.
+//' @param w_valid Validation.
+//' @param activ Activation function.
+//' @param n_epoch Number of epochs.
+//' @param n_batch Batch size.
+//' @param model_type Model type.
+//' @param learning_rate (Initial) learning rate.
+//' @param l1_reg L1-penalty.
+//' @param l2_reg L2-penalty.
+//' @param early_stop Whether to early stop.
+//' @param early_stop_det Number of epochs to determine early-stop.
+//' @param learning_rate_adaptive Adaptive learning rate adjustment method.
+//' @param rho Parameter.
+//' @param epsilon Parameter.
+//' @param beta1 Parameter.
+//' @param beta2 Parameter.
+//' @param loss_f Loss function.
+//'
+//' @return A list of outputs
+//'
 // [[Rcpp::export]]
-SEXP backprop_BLOCK(List n_hidden, double w_ini, // List weight, List bias,
+SEXP backprop_BLOCK(List n_hidden, double w_ini,
                     bool load_param, List weight, List bias,
                     NumericMatrix x, NumericVector y, NumericVector w, bool valid,
                     NumericMatrix x_valid, NumericVector y_valid, NumericVector w_valid,

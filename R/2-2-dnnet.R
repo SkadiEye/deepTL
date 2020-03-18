@@ -24,7 +24,7 @@
 #' @param plot Indicate whether to plot the loss.
 #' @param accel "rcpp" to use the Rcpp version and "none" (default) to use the R version for back propagation.
 #' @param learning.rate.adaptive Adaptive learning rate adjustment methods, one of the following,
-#'  "constant", "adadelta", "adagrad", "momentum", "adam".
+#'  "constant", "adam", "amsgrad", "adadelta", "adagrad".
 #' @param rho A parameter used in momentum.
 #' @param epsilon A parameter used in Adagrad and Adam.
 #' @param beta1 A parameter used in Adam.
@@ -41,6 +41,7 @@
 #' @return Returns a \code{DnnModelObj} object.
 #'
 #' @importFrom stats runif
+#' @importFrom stats sd
 #'
 #' @seealso
 #' \code{\link{dnnet-class}}\cr
@@ -191,7 +192,7 @@ dnnet <- function(train, validate = NULL,
                  x.scale = rep(1, n.variable),
                  y.center = rep(0, n.outcome),
                  y.scale = rep(1, n.outcome))
-    if(norm.x && (sum(apply(train@x, 2, sd) == 0) == 0)) {
+    if(norm.x && (sum(apply(train@x, 2, stats::sd) == 0) == 0)) {
 
       train@x <- scale(train@x)
       norm$x.center <- attr(train@x, "scaled:center")

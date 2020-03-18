@@ -9,17 +9,20 @@ double_deepTL(
   en_dnn_ctrl1 = NULL,
   en_dnn_ctrl2 = NULL,
   methods = c("revised-semi", "semi", "cov-adj", "ipw1", "ipw2", "ipw3",
-    "double-robust")
+    "double-robust"),
+  ...
 )
 }
 \arguments{
 \item{object}{A \code{dnnetInput} or a \code{dnnetSurvInput} object, the training set.}
 
-\item{en_dnn_ctrl1}{A list of parameters to be passed to \code{dnnet} for model 1.}
+\item{en_dnn_ctrl1}{A list of parameters to be passed to \code{ensemble_dnnet} for model 1.}
 
-\item{en_dnn_ctrl2}{A list of parameters to be passed to \code{dnnet} for model 2.}
+\item{en_dnn_ctrl2}{A list of parameters to be passed to \code{ensemble_dnnet} for model 2.}
 
 \item{methods}{Methods included in this analysis.}
+
+\item{...}{Parameters passed to both en_dnn_ctrl1 and en_dnn_ctrl2.}
 }
 \value{
 Returns a \code{list} of results.
