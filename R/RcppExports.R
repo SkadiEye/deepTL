@@ -34,7 +34,7 @@
 #' @return A list of outputs
 #'
 backprop <- function(n_hidden, w_ini, load_param, weight, bias, x, y, w, valid, x_valid, y_valid, w_valid, activ, n_epoch, n_batch, model_type, learning_rate, l1_reg, l2_reg, early_stop, early_stop_det, learning_rate_adaptive, rho, epsilon, beta1, beta2, loss_f) {
-    .Call('_deepTL_backprop', PACKAGE = 'deepTL', n_hidden, w_ini, load_param, weight, bias, x, y, w, valid, x_valid, y_valid, w_valid, activ, n_epoch, n_batch, model_type, learning_rate, l1_reg, l2_reg, early_stop, early_stop_det, learning_rate_adaptive, rho, epsilon, beta1, beta2, loss_f)
+    .Call(`_deepTL_backprop`, n_hidden, w_ini, load_param, weight, bias, x, y, w, valid, x_valid, y_valid, w_valid, activ, n_epoch, n_batch, model_type, learning_rate, l1_reg, l2_reg, early_stop, early_stop_det, learning_rate_adaptive, rho, epsilon, beta1, beta2, loss_f)
 }
 
 #' Backprop Long (Internal)
@@ -77,7 +77,7 @@ backprop <- function(n_hidden, w_ini, load_param, weight, bias, x, y, w, valid, 
 #' @return A list of outputs
 #'
 backprop_long <- function(n_hidden, w_ini, weight_pathway, bias_pathway, l1_pathway, l2_pathway, load_param, weight, bias, x, y, w, x_pathway, valid, x_valid, y_valid, w_valid, x_valid_pathway, activ, activ_pathway, n_epoch, n_batch, model_type, learning_rate, l1_reg, l2_reg, early_stop, early_stop_det, learning_rate_adaptive, rho, epsilon, beta1, beta2, loss_f) {
-    .Call('_deepTL_backprop_long', PACKAGE = 'deepTL', n_hidden, w_ini, weight_pathway, bias_pathway, l1_pathway, l2_pathway, load_param, weight, bias, x, y, w, x_pathway, valid, x_valid, y_valid, w_valid, x_valid_pathway, activ, activ_pathway, n_epoch, n_batch, model_type, learning_rate, l1_reg, l2_reg, early_stop, early_stop_det, learning_rate_adaptive, rho, epsilon, beta1, beta2, loss_f)
+    .Call(`_deepTL_backprop_long`, n_hidden, w_ini, weight_pathway, bias_pathway, l1_pathway, l2_pathway, load_param, weight, bias, x, y, w, x_pathway, valid, x_valid, y_valid, w_valid, x_valid_pathway, activ, activ_pathway, n_epoch, n_batch, model_type, learning_rate, l1_reg, l2_reg, early_stop, early_stop_det, learning_rate_adaptive, rho, epsilon, beta1, beta2, loss_f)
 }
 
 #' Backprop Surv (Internal)
@@ -113,7 +113,7 @@ backprop_long <- function(n_hidden, w_ini, weight_pathway, bias_pathway, l1_path
 #' @return A list of outputs
 #'
 backprop_surv <- function(n_hidden, w_ini, load_param, weight, bias, x, y, w, valid, x_valid, y_valid, w_valid, activ, n_epoch, n_batch, model_type, learning_rate, l1_reg, l2_reg, early_stop, early_stop_det, learning_rate_adaptive, rho, epsilon, beta1, beta2, loss_f) {
-    .Call('_deepTL_backprop_surv', PACKAGE = 'deepTL', n_hidden, w_ini, load_param, weight, bias, x, y, w, valid, x_valid, y_valid, w_valid, activ, n_epoch, n_batch, model_type, learning_rate, l1_reg, l2_reg, early_stop, early_stop_det, learning_rate_adaptive, rho, epsilon, beta1, beta2, loss_f)
+    .Call(`_deepTL_backprop_surv`, n_hidden, w_ini, load_param, weight, bias, x, y, w, valid, x_valid, y_valid, w_valid, activ, n_epoch, n_batch, model_type, learning_rate, l1_reg, l2_reg, early_stop, early_stop_det, learning_rate_adaptive, rho, epsilon, beta1, beta2, loss_f)
 }
 
 #' Backprop Block (Internal)
@@ -149,6 +149,6 @@ backprop_surv <- function(n_hidden, w_ini, load_param, weight, bias, x, y, w, va
 #' @return A list of outputs
 #'
 backprop_BLOCK <- function(n_hidden, w_ini, load_param, weight, bias, x, y, w, valid, x_valid, y_valid, w_valid, activ, n_epoch, n_batch, model_type, learning_rate, l1_reg, l2_reg, early_stop, early_stop_det, learning_rate_adaptive, rho, epsilon, beta1, beta2, loss_f) {
-    .Call('_deepTL_backprop_BLOCK', PACKAGE = 'deepTL', n_hidden, w_ini, load_param, weight, bias, x, y, w, valid, x_valid, y_valid, w_valid, activ, n_epoch, n_batch, model_type, learning_rate, l1_reg, l2_reg, early_stop, early_stop_det, learning_rate_adaptive, rho, epsilon, beta1, beta2, loss_f)
+    .Call(`_deepTL_backprop_BLOCK`, n_hidden, w_ini, load_param, weight, bias, x, y, w, valid, x_valid, y_valid, w_valid, activ, n_epoch, n_batch, model_type, learning_rate, l1_reg, l2_reg, early_stop, early_stop_det, learning_rate_adaptive, rho, epsilon, beta1, beta2, loss_f)
 }
 
