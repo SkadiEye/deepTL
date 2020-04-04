@@ -100,8 +100,10 @@ predict_mod_permfit <- function(mod, object, method, model.type) {
     }
   } else if(model.type == "binary-classification") {
 
-    if(method %in% c("ensemble_dnnet", "dnnet")) {
+    if(method %in% c("dnnet")) {
       return(predict(mod, object@x)[, mod@label[1]])
+    } else if(method == "ensemble_dnnet") {
+      return(predict(mod, object@x)[, mod@model.list[1]]@label[1])
     } else if(method == "random_forest") {
       return(predict(mod, object@x, type = "prob")[, 1])
     } else if (method == "lasso") {
