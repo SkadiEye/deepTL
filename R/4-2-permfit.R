@@ -57,9 +57,17 @@ mod_permfit <- function(method, model.type, object, ...) {
     }
   } else if (method == "svm") {
 
-    mod <- e1071::tune.svm(object@x, object@y, gamma = 10**(-(0:4)), cost = 10**(0:4/2),
-                           tunecontrol = e1071::tune.control(cross = 5))
-    mod <- mod$best.model
+    if(model.type == "regression") {
+      mod <- e1071::tune.svm(object@x, object@y, gamma = 10**(-(0:4)), cost = 10**(0:4/2),
+                             tunecontrol = e1071::tune.control(cross = 5))
+      mod <- mod$best.model
+    } else if(model.type == "binary-classification") {
+      mod <- e1071::tune.svm(object@x, object@y, gamma = 10**(-(0:4)), cost = 10**(0:4/2),
+                             tunecontrol = e1071::tune.control(cross = 5))
+      mod <- svm(object@x, object@y, gamma = mod$best.parameters$gamma, cost = mod$best.parameters$cost, probability = TRUE)
+    } else {
+      return("Not Applicable")
+    }
   } else if (method == "dnnet") {
 
     spli_obj <- splitDnnet(object, 0.8)
@@ -173,8 +181,8 @@ log_lik_diff <- function(model.type, y_hat, y_hat0, object) {
   if(model.type == "regression") {
     return((object@y - y_hat)**2 - (object@y - y_hat0)**2)
   } else if(model.type == "binary-classification") {
-    return(-object@y*log(y_hat) - (1-object@y)*log(1-y_hat) +
-             object@y*log(y_hat0) + (1-object@y)*log(1-y_hat0))
+    return(-(object@y == levels(object@y)[1])*log(y_hat) - (object@y != levels(object@y)[1])*log(1-y_hat) +
+             (object@y == levels(object@y)[1])*log(y_hat0) + (object@y != levels(object@y)[1])*log(1-y_hat0))
   } else if(model.type == "survival") {
     return(cox_logl(y_hat, object@y, object@e) -
              cox_logl(y_hat0, object@y, object@e))
@@ -302,7 +310,7 @@ permfit <- function(train, validate = NULL, k_fold = 5,
             x_i <- train_spl$train@x
             x_i[, pathway_list[[i]]] <- x_i[, pathway_list[[i]]][sample(dim(x_i)[1]), ]
             pred_i <- predict_mod_permfit(mod, importDnnet(x = x_i, y = train_spl$train@y), method, model.type)
-            p_score[l, shuffle[floor((k-1)*n/k_fold+1):floor(k*n/k_fold)], i] <- log_lik_diff(model.type, pred_i, f_hat_x, validate)
+            p_score[l, shuffle[floor((k-1)*n/k_fold+1):floor(k*n/k_fold)], i] <- log_lik_diff(model.type, pred_i, f_hat_x, train_spl$train)
           }
         }
       }
@@ -313,7 +321,7 @@ permfit <- function(train, validate = NULL, k_fold = 5,
           x_i <- train_spl$train@x
           x_i[, i] <- x_i[, i][sample(dim(x_i)[1])]
           pred_i <- predict_mod_permfit(mod, importDnnet(x = x_i, y = train_spl$train@y), method, model.type)
-          p_score2[l, shuffle[floor((k-1)*n/k_fold+1):floor(k*n/k_fold)], i] <- log_lik_diff(model.type, pred_i, f_hat_x, validate)
+          p_score2[l, shuffle[floor((k-1)*n/k_fold+1):floor(k*n/k_fold)], i] <- log_lik_diff(model.type, pred_i, f_hat_x, train_spl$train)
         }
       }
     }
@@ -321,10 +329,10 @@ permfit <- function(train, validate = NULL, k_fold = 5,
     valid_error <- sum(valid_error)/n_valid
   }
 
-  if(is.null(rownames(train@x))) {
+  if(is.null(colnames(train@x))) {
     imp <- data.frame(var_name = paste0("V", 1:p))
   } else  {
-    imp <- data.frame(var_name = rownames(train@x))
+    imp <- data.frame(var_name = colnames(train@x))
   }
   imp$importance <- apply(apply(p_score2, 2:3, mean), 2, mean)
   imp$importance_sd <- sqrt(apply(apply(p_score2, 2:3, mean), 2, stats::var)/n_valid)
