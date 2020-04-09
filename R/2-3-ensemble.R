@@ -8,6 +8,8 @@
 #' @param object A \code{dnnetInput} or a \code{dnnetSurvInput} object, the training set.
 #' @param n.ensemble The number of DNNs to be fit
 #' @param esCtrl A list of parameters to be passed to \code{dnnet}.
+#' @param random.nbatch An indicator whether n.batch is randomly selected.
+#' @param random.nbatch.limit Minimum and maximum for randomly chosen n.batch.
 #' @param unbalance.trt Treatment for unbalanced labels.
 #' @param bootstrap Indicator for whether a bootstrap sampling is used.
 #' @param prop.train If bootstrap == FALSE, a training/validation cut for the data will be used (0, 1).
@@ -26,6 +28,8 @@
 ensemble_dnnet <- function(object,
                            n.ensemble = 100,
                            esCtrl,
+                           random.nbatch = FALSE,
+                           random.nbatch.limit = NULL,
                            unbalance.trt = c("None", "Over", "Under", "Balance")[1],
                            bootstrap = TRUE,
                            prop.train = 1,
@@ -69,6 +73,8 @@ ensemble_dnnet <- function(object,
     validObj <- train.boot$valid
     trainObj.ind <- train.boot$split
     args <- esCtrl # removeArg(esCtrl, "machine")
+    if(random.nbatch)
+      args <- appendArg(args, "n.batch", ceiling(exp(runif(1, log(random.nbatch.limit[1]), log(random.nbatch.limit[2])))), TRUE)
     args <- appendArg(args, "validate", validObj, 1)
     args <- appendArg(args, "train", trainObj, 1)
 
