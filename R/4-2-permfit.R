@@ -176,11 +176,13 @@ cox_logl <- function(h, y, e) {
 #' @return Returns log-likelihood difference.
 #'
 #' @export
-log_lik_diff <- function(model.type, y_hat, y_hat0, object) {
+log_lik_diff <- function(model.type, y_hat, y_hat0, object, y_max = 1-10**-10, y_min = 10**-10) {
 
   if(model.type == "regression") {
     return((object@y - y_hat)**2 - (object@y - y_hat0)**2)
   } else if(model.type == "binary-classification") {
+    y_hat <- ifelse(y_hat < y_min, y_min, ifelse(y_hat > y_max, y_max, y_hat))
+    y_hat0 <- ifelse(y_hat0 < y_min, y_min, ifelse(y_hat0 > y_max, y_max, y_hat0))
     return(-(object@y == levels(object@y)[1])*log(y_hat) - (object@y != levels(object@y)[1])*log(1-y_hat) +
              (object@y == levels(object@y)[1])*log(y_hat0) + (object@y != levels(object@y)[1])*log(1-y_hat0))
   } else if(model.type == "survival") {
