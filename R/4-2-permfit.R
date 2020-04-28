@@ -158,7 +158,8 @@ cox_logl <- function(h, y, e) {
   order_y <- order(y)
   n <- length(y)
   map_ <- ((rep(1, n) %*% t(1:n)) >= (1:n %*% t(rep(1, n))))*1
-  sum((h[order_y] - log(colSums(exp(rep(1, n) %*% t(h[order_y]))*map_)))*e[order_y])
+  # sum((h[order_y] - log(colSums(exp(rep(1, n) %*% t(h[order_y]))*map_)))*e[order_y])
+  (h[order_y] - log(colSums(exp(rep(1, n) %*% t(h[order_y]))*map_)))*e[order_y]
 }
 
 ###########################################################
@@ -254,7 +255,7 @@ permfit <- function(train, validate = NULL, k_fold = 5,
     y_pred <- f_hat_x
 
     if(n_pathway >= 1) {
-      p_score <- array(0, dim = c(n_perm, n_valid, n_pathway))
+      p_score <- array(NA, dim = c(n_perm, n_valid, n_pathway))
       for(i in 1:n_pathway) {
         for(l in 1:n_perm) {
 
@@ -266,7 +267,7 @@ permfit <- function(train, validate = NULL, k_fold = 5,
       }
     }
 
-    p_score2 <- array(0, dim = c(n_perm, n_valid, p))
+    p_score2 <- array(NA, dim = c(n_perm, n_valid, p))
     for(i in 1:p) {
       for(l in 1:n_perm) {
 
@@ -283,8 +284,8 @@ permfit <- function(train, validate = NULL, k_fold = 5,
     n_valid <- n
     y_pred <- numeric(length(train@y))
     if(n_pathway >= 1)
-      p_score <- array(0, dim = c(n_perm, n_valid, n_pathway))
-    p_score2 <- array(0, dim = c(n_perm, n_valid, p))
+      p_score <- array(NA, dim = c(n_perm, n_valid, n_pathway))
+    p_score2 <- array(NA, dim = c(n_perm, n_valid, p))
     valid_error <- numeric(k_fold)
     for(k in 1:k_fold) {
 
@@ -336,11 +337,11 @@ permfit <- function(train, validate = NULL, k_fold = 5,
   } else  {
     imp <- data.frame(var_name = colnames(train@x))
   }
-  imp$importance <- apply(apply(p_score2, 2:3, mean), 2, mean)
-  imp$importance_sd <- sqrt(apply(apply(p_score2, 2:3, mean), 2, stats::var)/n_valid)
+  imp$importance <- apply(apply(p_score2, 2:3, mean), 2, mean, na.rm = TRUE)
+  imp$importance_sd <- sqrt(apply(apply(p_score2, 2:3, mean), 2, stats::var, na.rm = TRUE)/n_valid)
   imp$importance_pval <- 1 - stats::pnorm(imp$importance/imp$importance_sd)
   if(n_perm > 1) {
-    imp$importance_sd_x <- apply(apply(p_score2, c(1, 3), mean), 2, stats::sd)
+    imp$importance_sd_x <- apply(apply(p_score2, c(1, 3), mean), 2, stats::sd, na.rm = TRUE)
     imp$importance_pval_x <- 1 - stats::pnorm(imp$importance/imp$importance_sd_x)
   }
 
@@ -352,11 +353,11 @@ permfit <- function(train, validate = NULL, k_fold = 5,
     } else {
       imp_block <- data.frame(block = names(pathway_list))
     }
-    imp_block$importance <- apply(apply(p_score, 2:3, mean), 2, mean)
-    imp_block$importance_sd <- sqrt(apply(apply(p_score, 2:3, mean), 2, stats::var)/n_valid)
+    imp_block$importance <- apply(apply(p_score, 2:3, mean), 2, mean, na.rm = TRUE)
+    imp_block$importance_sd <- sqrt(apply(apply(p_score, 2:3, mean), 2, stats::var, na.rm = TRUE)/n_valid)
     imp_block$importance_pval <- 1 - stats::pnorm(imp_block$importance/imp_block$importance_sd)
     if(n_perm > 1) {
-      imp_block$importance_sd_x <- apply(apply(p_score, c(1, 3), mean), 2, stats::sd)
+      imp_block$importance_sd_x <- apply(apply(p_score, c(1, 3), mean), 2, stats::sd, na.rm = TRUE)
       imp_block$importance_pval_x <- 1 - stats::pnorm(imp_block$importance/imp_block$importance_sd_x)
     }
   }

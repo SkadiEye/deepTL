@@ -1,4 +1,44 @@
 ###########################################################
+### Negative log-likelihood (Internal)
+
+#' Negative log-likelihood (Internal)
+#'
+#' @param model.type Type of the model.
+#' @param y_hat Y hat.
+#' @param y_hat0 Another Y hat.
+#' @param alpha Other distributional parameter.
+#'
+#' @return Returns log-likelihood
+#'
+#' @export
+neg_log_lik_ <- function(model.type, y, y_hat, alpha = NULL) {
+  if(model.type == "regression") return((y - y_hat)**2)
+  if(model.type == "binary-classification") return(-(y*log(y_hat) + (1-y)*log(1-y_hat)))
+  if(model.type == "poisson") return(-(y*log(y_hat) - y_hat))
+  if(model.type == "poisson-nonzero") return(-(y*log(y_hat) - y_hat - log(1 - exp(-y_hat))))
+  if(model.type == "zip") {
+    z <- (y > 0)*1
+    pi_est <- y_hat[, 1]
+    lambda_est <- y_hat[, 2]
+    return(-(1-z)*log(1 - pi_est + pi_est*exp(-lambda_est)) -
+             z*(pi_est + y*log(lambda_est) - lambda_est))
+  }
+  if(model.type == "negbin")
+    return(-(y*log(y_hat) - (y + 1/alpha)*log(1 + alpha*y_hat)))
+  if(model.type == "poisson-nonzero")
+    return(-(y*log(y_hat) - (y + 1/alpha)*log(1 + alpha*y_hat) - log(1 - (1 + alpha*y_hat)**(-1/alpha))))
+  if(model.type == "zinb") {
+    z <- (y > 0)*1
+    pi_est <- y_hat[, 1]
+    mu_est <- y_hat[, 2]
+    return(-(1-z)*log(1 - pi_est + pi_est*(1 + alpha*mu_est)**(-1/alpha)) -
+             z*(pi_est + y*log(mu_est) - (y + 1/alpha)*log(1 + alpha*mu_est) - lgamma(1/alpha)))
+  }
+  if(model.type == "gamma") return(y/y_hat + log(y_hat))
+  return("Not Applicable")
+}
+
+###########################################################
 ### DNN ensemble
 
 #' An ensemble model of DNNs
@@ -84,6 +124,8 @@ ensemble_dnnet <- function(object,
     if(i == 1) model.spec <- model@model.spec
     if((model.type %in% c("negbin", "negbin-nonzero", "zinb")) && (i > 1))
       model.spec$negbin_alpha <- c(model.spec$negbin_alpha, model@model.spec$negbin_alpha)
+    if((model.type == "gamma") && (i > 1))
+      model.spec$gamma_alpha <- c(model.spec$gamma_alpha, model@model.spec$gamma_alpha)
 
     pred <- predict(model, object@x)
     if(model.type == "regression") {
@@ -109,8 +151,8 @@ ensemble_dnnet <- function(object,
         for(d in 1:dim(pred)[2]) mat_y[, d] <- (object@y == levels(object@y)[d])*1
       }
       pred.table[i, , ] <- pred
-      loss[i] <- -sum((mat_y[-trainObj.ind, ] * log(pred[-trainObj.ind, ]) -
-                         mat_y[-trainObj.ind, ] * (rep(1, length(validObj@y)) %*% t(log(colMeans(mat_y[-trainObj.ind, ]))))) *
+      loss[i] <- -sum((mat_y[-trainObj.ind, ] * log(pred[-trainObj.ind, ]) - mat_y[-trainObj.ind, ] *
+                         (rep(1, length(validObj@y)) %*% t(log(colMeans(mat_y[-trainObj.ind, ]))))) *
                         validObj@w) / sum(validObj@w)
     } else if(model.type == "ordinal-multi-classification") {
 
@@ -143,6 +185,40 @@ ensemble_dnnet <- function(object,
       }
       if(sum(e_y_order) > 0)
         loss[i] <- loss[i]/sum(e_y_order)
+    } else if(model.type %in% c("poisson", "poisson-nonzero", "gamma")) {
+
+      pred.table[i, ] <- pred
+      loss[i] <- sum((neg_log_lik_(model.type, validObj@y, rep(mean(validObj@y), length(validObj@y))) -
+                        neg_log_lik_(model.type, validObj@y, pred[-trainObj.ind]))*validObj@w) / sum(validObj@w)
+    } else if(model.type == "zip") {
+
+      if(i == 1) pred.table <- array(NA, dim = c(n.ensemble, dim(pred)))
+      pred.table[i, , ] <- pred
+      loss[i] <- sum((neg_log_lik_(model.type, validObj@y,
+                                   cbind(rep(mean(validObj@y > 0), length(validObj@y)),
+                                         rep(mean(validObj@y)/mean(validObj@y > 0), length(validObj@y)))) -
+                        neg_log_lik_(model.type, validObj@y, pred[-trainObj.ind, ]))*validObj@w) / sum(validObj@w)
+    } else if(model.type %in% c("negbin", "negbin-nonzero")) {
+
+      pred.table[i, ] <- pred
+      if(i == n.ensemble) {
+        negbin_alpha <- exp(mean(log(model.spec$negbin_alpha)))
+        for(iii in 1:n.ensemble)
+          loss[iii] <- sum((neg_log_lik_(model.type, validObj@y, rep(mean(validObj@y), length(validObj@y)), alpha = negbin_alpha) -
+                              neg_log_lik_(model.type, validObj@y, pred.table[iii, -trainObj.ind], alpha = negbin_alpha))*validObj@w) / sum(validObj@w)
+      }
+    } else if(model.type == "zinb") {
+
+      if(i == 1) pred.table <- array(NA, dim = c(n.ensemble, dim(pred)))
+      pred.table[i, , ] <- pred
+      if(i == n.ensemble) {
+        negbin_alpha <- exp(mean(log(model.spec$negbin_alpha)))
+        for(iii in 1:n.ensemble)
+          loss[iii] <- sum((neg_log_lik_(model.type, validObj@y,
+                                         cbind(rep(mean(validObj@y > 0), length(validObj@y)),
+                                               rep(mean(validObj@y)/mean(validObj@y > 0), length(validObj@y))), alpha = negbin_alpha) -
+                              neg_log_lik_(model.type, validObj@y, pred.table[iii, -trainObj.ind, ], alpha = negbin_alpha))*validObj@w) / sum(validObj@w)
+      }
     }
 
     if(verbose)
@@ -205,6 +281,36 @@ ensemble_dnnet <- function(object,
         mse[i] <- mse[i]/sum(e_y_order)
 
     }
+
+    keep <- loss >= sort(loss)[which.min(mse[1:(n.ensemble - min.keep + 1)])]
+  } else if(best.opti && model.type %in% c("poisson", "poisson-nonzero", "gamma")) {
+
+    mse <- numeric(n.ensemble - 1)
+    for(i in 1:length(mse))
+      mse[i] <- sum(neg_log_lik_(model.type, object@y, colMeans(pred.table[loss >= sort(loss)[i], ]))*object@w)/sum(object@w)
+
+    keep <- loss >= sort(loss)[which.min(mse[1:(n.ensemble - min.keep + 1)])]
+  } else if(best.opti && model.type == c("zip")) {
+
+    mse <- numeric(n.ensemble - 1)
+    for(i in 1:length(mse))
+      mse[i] <- sum(neg_log_lik_(model.type, object@y, apply(pred.table[loss >= sort(loss)[i], , ], 2:3, mean))*object@w)/sum(object@w)
+
+    keep <- loss >= sort(loss)[which.min(mse[1:(n.ensemble - min.keep + 1)])]
+  } else if(best.opti && model.type %in% c("negbin", "negbin-nonzero")) {
+
+    mse <- numeric(n.ensemble - 1)
+    for(i in 1:length(mse))
+      mse[i] <- sum(neg_log_lik_(model.type, object@y, colMeans(pred.table[loss >= sort(loss)[i], ]),
+                                 alpha = negbin_alpha)*object@w)/sum(object@w)
+
+    keep <- loss >= sort(loss)[which.min(mse[1:(n.ensemble - min.keep + 1)])]
+  } else if(best.opti && model.type == c("zinb")) {
+
+    mse <- numeric(n.ensemble - 1)
+    for(i in 1:length(mse))
+      mse[i] <- sum(neg_log_lik_(model.type, object@y, apply(pred.table[loss >= sort(loss)[i], , ], 2:3, mean),
+                                 alpha = negbin_alpha)*object@w)/sum(object@w)
 
     keep <- loss >= sort(loss)[which.min(mse[1:(n.ensemble - min.keep + 1)])]
   }

@@ -255,7 +255,7 @@ dnnet <- function(train, validate = NULL,
     } else {
 
       if(norm.y && (!family %in% c("poisson", "negbin", "poisson-nonzero",
-                                   "negbin-nonzero", "zip", "zinb"))) {
+                                   "negbin-nonzero", "zip", "zinb", "gamma"))) {
 
         train@y <- scale(train@y)
         norm$y.center <- attr(train@y, "scaled:center")
@@ -280,13 +280,9 @@ dnnet <- function(train, validate = NULL,
   if(class(train) == "dnnetSurvInput")
     model.type <- "survival"
 
-  if(family %in% c("poisson", "poisson-nonzero")) {
-    model.type <- "poisson"
-    loss.f <- family
-  }
-
-  if(family %in% c("negbin", "negbin-nonzero")) {
-    model.type <- "negbin"
+  if(family %in% c("poisson", "poisson-nonzero",
+                   "negbin", "negbin-nonzero", "gamma")) {
+    model.type <- family
     loss.f <- family
   }
 
@@ -455,8 +451,7 @@ dnnet <- function(train, validate = NULL,
                         bias = result[[2]],
                         loss = min.loss,
                         loss.traj = as.numeric(result[[3]]*mean(norm$y.scale**2)),
-                        label = ifelse(model.type %in% c("multi-regression", "regression", "survival",
-                                                         "poisson", "negbin", "zip", "zinb"),
+                        label = ifelse(!model.type %in% c("binary-classification", "multi-classification", "ordinal-multi-classification"),
                                        '', list(label))[[1]],
                         model.type = model.type,
                         model.spec = list(n.hidden = n.hidden,
@@ -473,8 +468,8 @@ dnnet <- function(train, validate = NULL,
                                           l2.pathway = l2.pathway,
                                           weight.pathway = weight.pathway,
                                           bias.pathway = bias.pathway,
-                                          negbin_alpha = ifelse(model.type %in% c("negbin", "zinb"),
-                                                                result[[5]], 1))))
+                                          negbin_alpha = ifelse(model.type %in% c("negbin", "negbin-nonzero", "zinb"), result[[5]], 1),
+                                          gamma_alpha = ifelse(model.type == "gamma", 0, 1))))
   } else {
 
     stop("Error fitting model. ")
