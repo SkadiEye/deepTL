@@ -67,7 +67,7 @@ dnnet <- function(train, validate = NULL,
                   beta1 = 0.9, beta2 = 0.999, loss.f = ifelse(is.factor(train@y), "logit", "mse"),
                   pathway = FALSE, pathway.list = NULL, pathway.active = "identity", l1.pathway = 0, l2.pathway = 0) {
 
-  if(!class(train@x) %in% c("matrix", "data.frame"))
+  if(!class(train@x)[1] %in% c("matrix", "data.frame"))
     stop("x has to be either a matrix or a data frame. ")
   if(!class(train@y)[1] %in% c("numeric", "factor", "ordered", "vector", "integer", "matrix"))
     stop("y has to be either a factor, a numeric vector, or a matrix. ")
