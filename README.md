@@ -8,7 +8,7 @@ designed for,
     permutation-based feature importance test scheme for black-box
     models (DNNs, support vector machines, random forests, etc)
     \[Manuscript submitted\]
-    \[[example](https://github.com/SkadiEye/deepTL/blob/master/permfit.md)\]
+    \[[example](https://github.com/SkadiEye/deepTL/blob/master/permfit/permfit.md)\]
   - ***deepTL***: Deep Treatment Learning, an efficient semiparametric
     framework coupled with ensemble DNNs for adjusting complex
     confounding \[Manuscript submitted\]
@@ -24,8 +24,7 @@ You may also use it for,
     neural networks
   - ***Bagging***: Bootstrap aggregating for DNN models, with an
     automatic scheme to select the optimal subset of DNNs (details in
-    paper: Mi et al.
-    (2019))
+    paper: Mi et al. (2019))
   - \[[example](https://github.com/SkadiEye/deepTL/blob/master/dnnet.md)\]
 
 # Installation
@@ -42,7 +41,7 @@ devtools::install_github("SkadiEye/deepTL")
 
 # References
 
-<div id="refs" class="references">
+<div id="refs" class="references hanging-indent">
 
 <div id="ref-mi2019bagging">
 
