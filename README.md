@@ -1,4 +1,4 @@
-Deep Treatment Learning (deepTL)
+Deep Treatment Learning (deepTL) [![DOI](https://zenodo.org/badge/156120192.svg)](https://zenodo.org/badge/latestdoi/156120192)
 ================
 
 Deep Treatment Learning (deepTL) is an R packages written in S4 class,
