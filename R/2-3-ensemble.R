@@ -3,9 +3,8 @@
 
 #' Negative log-likelihood (Internal)
 #'
-#' @param model.type Type of the model.
-#' @param y_hat Y hat.
-#' @param y_hat0 Another Y hat.
+#' @param model.type Type of the model.v
+#' @param y_hat Y hat.x
 #' @param alpha Other distributional parameter.
 #'
 #' @return Returns log-likelihood

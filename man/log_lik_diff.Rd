@@ -4,7 +4,14 @@
 \alias{log_lik_diff}
 \title{Log-likelihood Difference (Internal)}
 \usage{
-log_lik_diff(model.type, y_hat, y_hat0, object)
+log_lik_diff(
+  model.type,
+  y_hat,
+  y_hat0,
+  object,
+  y_max = 1 - 10^-10,
+  y_min = 10^-10
+)
 }
 \arguments{
 \item{model.type}{Type of the model.}
@@ -14,6 +21,10 @@ log_lik_diff(model.type, y_hat, y_hat0, object)
 \item{y_hat0}{Another Y hat.}
 
 \item{object}{Data object.}
+
+\item{y_max}{Max prob for binary Y.}
+
+\item{y_min}{Min prob for binary Y.}
 }
 \value{
 Returns log-likelihood difference.

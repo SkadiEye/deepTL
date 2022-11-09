@@ -10,7 +10,8 @@ permfit(
   k_fold = 5,
   n_perm = 100,
   pathway_list = list(),
-  method = c("ensemble_dnnet", "random_forest", "lasso", "linear", "svm", "dnnet")[1],
+  method = c("ensemble_dnnet", "random_forest", "lasso", "linear", "svm", "dnnet",
+    "xgboost")[1],
   shuffle = NULL,
   ...
 )

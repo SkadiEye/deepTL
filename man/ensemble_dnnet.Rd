@@ -8,6 +8,8 @@ ensemble_dnnet(
   object,
   n.ensemble = 100,
   esCtrl,
+  random.nbatch = FALSE,
+  random.nbatch.limit = NULL,
   unbalance.trt = c("None", "Over", "Under", "Balance")[1],
   bootstrap = TRUE,
   prop.train = 1,
@@ -23,6 +25,10 @@ ensemble_dnnet(
 \item{n.ensemble}{The number of DNNs to be fit}
 
 \item{esCtrl}{A list of parameters to be passed to \code{dnnet}.}
+
+\item{random.nbatch}{An indicator whether n.batch is randomly selected.}
+
+\item{random.nbatch.limit}{Minimum and maximum for randomly chosen n.batch.}
 
 \item{unbalance.trt}{Treatment for unbalanced labels.}
 

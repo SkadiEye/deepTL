@@ -3,7 +3,7 @@ Type: Package
 Title: Deep Treatment Learning
 Version: 1.0.0
 Author: Xinlei Mi
-Maintainer: Xinlei Mi <xm2231@cumc.columbia.edu>
+Maintainer: Xinlei Mi <xinlei.mi@northwestern.edu>
 Description: A deep learning-based R package for treatment learning (deepTL):
     1. EndLot, a DNN-based individualized treatment decision rule.
     2. deepTL, an efficient DNN-based semiparametric framework for adjusting confounding;
@@ -13,6 +13,7 @@ License: GPL (>= 2)
 Encoding: UTF-8
 LazyData: true
 Imports: Rcpp (>= 0.12.17)
-Depends: R (>= 3.0.0), methods, e1071, glmnet, randomForest, randomForestSRC, survival
+Depends: R (>= 3.5.0), methods, e1071, glmnet, randomForest, randomForestSRC, 
+    survival, xgboost
 LinkingTo: Rcpp, RcppArmadillo
-RoxygenNote: 7.1.0
+RoxygenNote: 7.2.1

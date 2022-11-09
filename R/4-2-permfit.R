@@ -22,6 +22,7 @@
 #' @importFrom survival Surv
 #' @importFrom e1071 svm
 #' @importFrom e1071 tune.svm
+#' @importFrom xgboost xgboost
 #'
 #' @export
 mod_permfit <- function(method, model.type, object, ...) {
@@ -73,6 +74,27 @@ mod_permfit <- function(method, model.type, object, ...) {
     spli_obj <- splitDnnet(object, 0.8)
     mod <- do.call(dnnet, appendArg(appendArg(list(...), "train", spli_obj$train, TRUE),
                                     "validate", spli_obj$valid, TRUE))
+  } else if (method == "xgboost") {
+
+    if(model.type == "regression") {
+      arg_xg <- list(...) %>%
+        appendArg("data", object@x, TRUE) %>%
+        appendArg("label", object@y, TRUE) %>%
+        appendArg("verbose", 0, TRUE)
+      if(!"nrounds" %in% names(arg_xg))
+        arg_xg <- arg_xg %>% appendArg("nrounds", 50, TRUE)
+      mod <- do.call(xgboost::xgboost, arg_xg)
+    } else if(model.type == "binary-classification") {
+      arg_xg <- list(...) %>%
+        appendArg("data", object@x, TRUE) %>%
+        appendArg("label", (object@y == levels(object@y)[1])*1, TRUE) %>%
+        appendArg("verbose", 0, TRUE)
+      if(!"nrounds" %in% names(arg_xg))
+        arg_xg <- arg_xg %>% appendArg("nrounds", 50, TRUE)
+      mod <- do.call(xgboost::xgboost, arg_xg)
+    } else {
+      return("Not Applicable")
+    }
   } else {
 
     return("Not Applicable")
@@ -102,7 +124,7 @@ predict_mod_permfit <- function(mod, object, method, model.type) {
     if(!method %in% c("linear", "lasso")) {
       return(predict(mod, object@x))
     } else if(method == "linear") {
-      return(predict(mod, object@x)[, "s0"])
+      return(predict(mod, data.frame(x = object@x)))
     } else {
       return(predict(mod, object@x)[, "s0"])
     }
@@ -114,13 +136,15 @@ predict_mod_permfit <- function(mod, object, method, model.type) {
       return(predict(mod, object@x)[, mod@model.list[[1]]@label[1]])
     } else if(method == "random_forest") {
       return(predict(mod, object@x, type = "prob")[, 1])
-    } else if (method == "lasso") {
+    } else if(method == "lasso") {
       return(1 - predict(mod, object@x, type = "response")[, "s0"])
     } else if (method == "linear") {
       return(1 - predict(mod, data.frame(x = object@x, y = object@y), type = "response"))
-    } else if (method == "svm") {
+    } else if(method == "svm") {
       return(attr(predict(mod, object@x, decision.values = TRUE, probability = TRUE),
                   "probabilities")[, levels(object@y)[1]])
+    } else if(method == "xgboost") {
+      return(predict(mod, object@x))
     }
   } else if(model.type == "survival") {
 
@@ -173,6 +197,8 @@ cox_logl <- function(h, y, e) {
 #' @param y_hat Y hat.
 #' @param y_hat0 Another Y hat.
 #' @param object Data object.
+#' @param y_max Max prob for binary Y.
+#' @param y_min Min prob for binary Y.
 #'
 #' @return Returns log-likelihood difference.
 #'
@@ -225,7 +251,8 @@ log_lik_diff <- function(model.type, y_hat, y_hat0, object, y_max = 1-10**-10, y
 permfit <- function(train, validate = NULL, k_fold = 5,
                     n_perm = 100, pathway_list = list(),
                     method = c("ensemble_dnnet", "random_forest",
-                               "lasso", "linear", "svm", "dnnet")[1],
+                               "lasso", "linear", "svm", "dnnet",
+                               "xgboost")[1],
                     shuffle = NULL,
                     ...) {
   n_pathway <- length(pathway_list)
